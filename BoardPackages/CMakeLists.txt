@@ -76,6 +76,10 @@ else()
     message(WARNING "No .ld file found via GLOB. Falling back to: ${DETECTED_LINKER_SCRIPT}")
 endif()
 
+if(NOT EXISTS "${DETECTED_LINKER_SCRIPT}")
+    message(FATAL_ERROR "Error: No valid linker script (.ld) found inside 'board_package' target!")
+endif()
+
 # 6. Set Target Property
 set_target_properties(board_package PROPERTIES
     BOARD_LINKER_SCRIPT "${DETECTED_LINKER_SCRIPT}"

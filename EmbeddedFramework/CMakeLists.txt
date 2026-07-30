@@ -4,6 +4,10 @@ add_library(EmbeddedFramework OBJECT
     ${PAL_SOURCES}
 )
 
+if(NOT TARGET board_package)
+    message(FATAL_ERROR "Error: CMake target 'board_package' is missing! Check your board_package/CMakeLists.txt.")
+endif()
+
 # Linking board_package inherits bsp_flags (-mfloat-abi=hard, -mcpu=cortex-m4) and include paths
 target_link_libraries(EmbeddedFramework PUBLIC board_package)
 
