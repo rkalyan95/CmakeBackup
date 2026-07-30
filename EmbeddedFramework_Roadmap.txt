@@ -1,0 +1,78 @@
+Embedded Framework Roadmap
+
+Phase 0 – Repository Setup 1. Create the workspace structure: Workspace/
+EmbeddedFramework/ BoardPackages/ Projects/ tools/ 2. Initialize Git. 3.
+Commit: git commit -m “Initial workspace structure”
+
+Phase 1 – Build System (Highest Priority) Goal: Build one application
+using: - EmbeddedFramework - One BoardPackage - One Project
+
+Create: Projects/HelloFramework/app/main.c
+
+main(): while(1) {}
+
+Generate STM32CubeMX code (GPIO + RCC + optional UART). Copy it to:
+BoardPackages/nucleo_l433/generated/
+
+Do NOT modify generated files.
+
+Build Flow: Application + EmbeddedFramework + BoardPackage + Generated
+Code = Firmware
+
+Phase 2 – PAL Implement GPIO PAL: - PAL_GPIO_Init() - PAL_GPIO_Write() -
+PAL_GPIO_Read() - PAL_GPIO_Toggle()
+
+Test: Blink onboard LED using only PAL APIs.
+
+Commit.
+
+Phase 3 – UART PAL Implement: - PAL_UART_Init() - PAL_UART_Write() -
+PAL_UART_Read()
+
+Test: Print “Hello Framework”
+
+Commit.
+
+Phase 4 – Logger Implement: - Logger_Info() - Logger_Warn() -
+Logger_Error() - Logger_Debug()
+
+Logger must use UART PAL only.
+
+Commit.
+
+Phase 5 – Ring Buffer Implement reusable ring buffer. No hardware
+dependencies.
+
+Commit.
+
+Phase 6 – CLI Build CLI using: - UART PAL - Logger - Ring Buffer
+
+Commands: - help - version - reset - led on - led off
+
+Commit.
+
+Phase 7 – Scheduler Implement a cooperative scheduler. Do NOT use
+FreeRTOS yet.
+
+Commit.
+
+Phase 8 – Communication PAL Implement: - SPI - I2C
+
+Commit.
+
+Phase 9 – Drivers Implement drivers: - OLED / SSD1306 - Ultrasonic -
+MPU6050 - BME280 - TLE92466
+
+Drivers must use PAL only.
+
+Commit.
+
+Phase 10 – Middleware Implement: - BLE - MQTT - OTA - Modbus - CANopen
+
+Final Porting Once STM32 is stable: - Implement ESP32 PAL - Implement
+XMC1100 PAL
+
+Guiding Rules - Never modify generated code. - Never include vendor SDK
+headers outside platform/ports/. - Drivers only use PAL. - Services
+never call HAL directly. - Applications never call HAL directly. -
+Commit after every successful milestone.

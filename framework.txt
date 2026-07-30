@@ -1,0 +1,470 @@
+Workspace/
+│
+├── EmbeddedFramework/
+│
+│   ├── pal/                                # Platform Abstraction Layer interfaces
+│   │   ├── gpio/
+│   │   │   └── include/
+│   │   │       └── gpio.h
+│   │   ├── uart/
+│   │   │   └── include/
+│   │   │       └── uart.h
+│   │   ├── spi/
+│   │   │   └── include/
+│   │   │       └── spi.h
+│   │   ├── i2c/
+│   │   │   └── include/
+│   │   │       └── i2c.h
+│   │   ├── adc/
+│   │   │   └── include/
+│   │   │       └── adc.h
+│   │   ├── pwm/
+│   │   │   └── include/
+│   │   │       └── pwm.h
+│   │   ├── timer/
+│   │   │   └── include/
+│   │   │       └── timer.h
+│   │   ├── rtc/
+│   │   │   └── include/
+│   │   │       └── rtc.h
+│   │   ├── flash/
+│   │   │   └── include/
+│   │   │       └── flash.h
+│   │   ├── watchdog/
+│   │   │   └── include/
+│   │   │       └── watchdog.h
+│   │   └── interrupt/
+│   │       └── include/
+│   │           └── interrupt.h
+│   │
+│   ├── platform/
+│   │   └── ports/                          # Platform specific PAL implementations
+│   │       ├── stm32/
+│   │       │   ├── gpio/
+│   │       │   │   ├── src/
+│   │       │   │   │   └── gpio.c
+│   │       │   │   └── include/
+│   │       │   │       └── gpio_internal.h
+│   │       │   ├── uart/
+│   │       │   ├── spi/
+│   │       │   ├── i2c/
+│   │       │   ├── adc/
+│   │       │   ├── pwm/
+│   │       │   ├── timer/
+│   │       │   ├── rtc/
+│   │       │   ├── flash/
+│   │       │   ├── watchdog/
+│   │       │   └── interrupt/
+│   │       │
+│   │       ├── esp32/
+│   │       │   ├── gpio/
+│   │       │   ├── uart/
+│   │       │   ├── spi/
+│   │       │   ├── i2c/
+│   │       │   ├── adc/
+│   │       │   ├── pwm/
+│   │       │   ├── timer/
+│   │       │   ├── rtc/
+│   │       │   ├── flash/
+│   │       │   └── watchdog/
+│   │       │
+│   │       └── xmc1100/
+│   │           ├── gpio/
+│   │           ├── uart/
+│   │           ├── spi/
+│   │           ├── i2c/
+│   │           ├── adc/
+│   │           ├── pwm/
+│   │           ├── timer/
+│   │           ├── rtc/
+│   │           ├── flash/
+│   │           ├── watchdog/
+│   │           └── interrupt/
+│   │
+│   ├── drivers/                            # Portable hardware drivers
+│   │   ├── oled/
+│   │   │   ├── include/
+│   │   │   ├── src/
+│   │   │   ├── tests/
+│   │   │   ├── examples/
+│   │   │   ├── README.md
+│   │   │   └── CMakeLists.txt
+│   │   │
+│   │   ├── ssd1306/
+│   │   ├── tle92466/
+│   │   ├── mpu6050/
+│   │   ├── ultrasonic/
+│   │   ├── joystick/
+│   │   ├── ws2812/
+│   │   ├── bme280/
+│   │   ├── at24cxx/
+│   │   └── w25qxx/
+│   │
+│   ├── services/                           # Reusable framework services
+│   │   ├── logger/
+│   │   ├── cli/
+│   │   ├── scheduler/
+│   │   ├── config/
+│   │   ├── diagnostics/
+│   │   ├── event_manager/
+│   │   ├── state_machine/
+│   │   ├── shell/
+│   │   ├── runtime_stats/
+│   │   └── watchdog_manager/
+│   │
+│   ├── middleware/                         # Middleware & protocol stacks
+│   │   ├── ble/
+│   │   ├── mqtt/
+│   │   ├── ota/
+│   │   ├── modbus/
+│   │   ├── canopen/
+│   │   ├── json/
+│   │   ├── cbor/
+│   │   └── protocol/
+│   │
+│   ├── utilities/                          # Pure C reusable modules
+│   │   ├── crc/
+│   │   ├── fifo/
+│   │   ├── ring_buffer/
+│   │   ├── linked_list/
+│   │   ├── queue/
+│   │   ├── memory_pool/
+│   │   ├── bitmap/
+│   │   ├── string/
+│   │   ├── math/
+│   │   ├── parser/
+│   │   ├── checksum/
+│   │   ├── endian/
+│   │   └── byte_order/
+│   │
+│   ├── interfaces/                         # Optional software abstraction interfaces
+│   │   ├── ilogger.h
+│   │   ├── ischeduler.h
+│   │   ├── istorage.h
+│   │   └── itransport.h
+│   │
+│   ├── include/                            # Public framework headers
+│   │   ├── framework.h
+│   │   ├── framework_config.h
+│   │   ├── framework_error.h
+│   │   └── framework_version.h
+│   │
+│   ├── docs/
+│   │   ├── architecture.md
+│   │   ├── api_reference.md
+│   │   ├── coding_guidelines.md
+│   │   ├── getting_started.md
+│   │   ├── module_template.md
+│   │   └── porting_guide.md
+│   │
+│   ├── tests/
+│   │   ├── test_crc/
+│   │   ├── test_fifo/
+│   │   ├── test_logger/
+│   │   ├── test_memory_pool/
+│   │   ├── test_ring_buffer/
+│   │   └── test_scheduler/
+│   │
+│   ├── examples/
+│   │   ├── cli_example/
+│   │   ├── crc_example/
+│   │   ├── gpio_example/
+│   │   ├── logger_example/
+│   │   ├── scheduler_example/
+│   │   ├── spi_example/
+│   │   └── uart_example/
+│   │
+│   ├── cmake/
+│   │   ├── macros/
+│   │   ├── modules/
+│   │   └── toolchains/
+│   │
+│   └── CMakeLists.txt
+│
+├── BoardPackages/
+│
+│   ├── nucleo_l433/
+│   │   ├── generated/                      # Read-only vendor generated code
+│   │   │   ├── nucleo_l433.ioc
+│   │   │   ├── Core/
+│   │   │   ├── Drivers/
+│   │   │   ├── startup_stm32l433xx.s
+│   │   │   ├── STM32L433.ld
+│   │   │   ├── STM32CubeMX.ioc
+│   │   │   └── ...
+│   │   │
+│   │   ├── board/
+│   │   │   ├── board.h
+│   │   │   ├── board.c
+│   │   │   ├── board_config.h
+│   │   │   └── board_pins.h
+│   │   │
+│   │   ├── README.md
+│   │   └── CMakeLists.txt
+│   │
+│   ├── esp32_devkit/
+│   │   ├── generated/
+│   │   │   ├── sdkconfig
+│   │   │   ├── main/
+│   │   │   ├── components/
+│   │   │   └── ...
+│   │   ├── board/
+│   │   ├── README.md
+│   │   └── CMakeLists.txt
+│   │
+│   └── xmc1100_bootkit/
+│       ├── generated/
+│       ├── board/
+│       ├── README.md
+│       └── CMakeLists.txt
+│
+├── Projects/
+│
+│   ├── UltrasonicDemo/
+│   │   ├── app/
+│   │   │   ├── app_init.c
+│   │   │   ├── display_app.c
+│   │   │   ├── main_app.c
+│   │   │   └── ultrasonic_app.c
+│   │   │
+│   │   ├── config/
+│   │   │   ├── app_config.h
+│   │   │   ├── feature_config.h
+│   │   │   ├── project_config.h
+│   │   │   └── scheduler_config.h
+│   │   │
+│   │   ├── assets/
+│   │   │   ├── fonts/
+│   │   │   ├── images/
+│   │   │   └── webpages/
+│   │   │
+│   │   ├── README.md
+│   │   └── CMakeLists.txt
+│   │
+│   ├── BodyControl/
+│   │   ├── app/
+│   │   ├── config/
+│   │   ├── assets/
+│   │   ├── README.md
+│   │   └── CMakeLists.txt
+│   │
+│   ├── SensorNode/
+│   │   ├── app/
+│   │   ├── config/
+│   │   ├── assets/
+│   │   ├── README.md
+│   │   └── CMakeLists.txt
+│   │
+│   └── WeatherStation/
+│       ├── app/
+│       ├── config/
+│       ├── assets/
+│       ├── README.md
+│       └── CMakeLists.txt
+│
+├── tools/
+│   ├── ci/
+│   ├── codegen/
+│   ├── docker/
+│   ├── flash/
+│   ├── formatter/
+│   └── scripts/
+│
+└── README.md
+
+
+
+
+
+
+
+
+                Embedded Framework
+                        │
+        ┌───────────────┼────────────────┐
+        │               │                │
+        ▼               ▼                ▼
+    GitHub Repo     Blog/Docs      Demo Projects
+        │               │                │
+        └───────────────┼────────────────┘
+                        ▼
+               Reputation & Trust
+                        │
+        ┌───────────────┼────────────────┐
+        ▼               ▼                ▼
+   Consulting       Courses         Speaking
+
+
+
+
+EmbeddedFramework/CMakeLists.txt
+EmbeddedFramework/pal/CMakeLists.txt
+EmbeddedFramework/platform/CMakeLists.txt
+EmbeddedFramework/drivers/CMakeLists.txt
+EmbeddedFramework/services/CMakeLists.txt
+EmbeddedFramework/middleware/CMakeLists.txt
+EmbeddedFramework/utilities/CMakeLists.txt
+
+
+
+
+====================================================
+Embedded Framework Roadmap - Month 1
+====================================================
+
+Goal:
+Establish a solid foundation for the Embedded Framework.
+Focus on architecture, build system, and the first reusable modules.
+Target effort: ~2 hours/day (~10 hours/week)
+
+----------------------------------------------------
+Week 1 - Project Foundation
+----------------------------------------------------
+
+Objectives:
+- Create Git repository
+- Create workspace structure
+- Setup CMake project hierarchy
+- Create first BoardPackage
+- Generate STM32CubeMX project
+- Build firmware successfully
+
+Tasks:
+[ ] Create Workspace folder structure
+[ ] Create EmbeddedFramework folder
+[ ] Create BoardPackages folder
+[ ] Create Projects folder
+[ ] Create top-level CMakeLists.txt
+[ ] Generate STM32CubeMX project
+[ ] Copy generated files into BoardPackages/nucleo_l433/generated
+[ ] Create board folder
+[ ] Build firmware successfully
+[ ] Flash firmware to the board
+
+Deliverable:
+✓ Empty firmware builds and flashes successfully.
+
+----------------------------------------------------
+Week 2 - GPIO Platform Abstraction Layer
+----------------------------------------------------
+
+Objectives:
+- Design the PAL GPIO interface
+- Implement STM32 GPIO backend
+- Blink LED using PAL only
+
+Tasks:
+[ ] Create pal/gpio/include/gpio.h
+[ ] Create platform/ports/stm32/gpio
+[ ] Implement PAL_GPIO_Init()
+[ ] Implement PAL_GPIO_Write()
+[ ] Implement PAL_GPIO_Read()
+[ ] Implement PAL_GPIO_Toggle()
+[ ] Create board pin definitions
+[ ] Blink LED through PAL
+
+Deliverable:
+✓ LED blinking without calling HAL directly from application code.
+
+----------------------------------------------------
+Week 3 - UART PAL + Logger
+----------------------------------------------------
+
+Objectives:
+- Implement UART abstraction
+- Build reusable logging service
+
+Tasks:
+[ ] Design UART API
+[ ] Implement STM32 UART backend
+[ ] Create Logger service
+[ ] Redirect logger output to UART
+[ ] Print startup message
+[ ] Add simple log levels (INFO, WARN, ERROR)
+
+Deliverable:
+✓ UART communication through PAL.
+✓ Logger working on STM32.
+
+----------------------------------------------------
+Week 4 - Ring Buffer + CLI Foundation
+----------------------------------------------------
+
+Objectives:
+- Build reusable Ring Buffer
+- Start CLI framework
+
+Tasks:
+[ ] Implement Ring Buffer utility
+[ ] Unit test Ring Buffer
+[ ] Connect UART RX to Ring Buffer
+[ ] Parse received commands
+[ ] Implement "help" command
+[ ] Implement "version" command
+
+Deliverable:
+✓ Working UART command-line interface.
+
+====================================================
+End of Month 1 Goals
+====================================================
+
+Architecture
+-------------
+✓ Workspace organized
+✓ BoardPackage created
+✓ Build system working
+
+Framework
+----------
+✓ GPIO PAL
+✓ UART PAL
+✓ Logger Service
+✓ Ring Buffer
+✓ Basic CLI
+
+Demonstration
+-------------
+✓ Firmware builds successfully
+✓ LED blinks using PAL
+✓ UART prints logs
+✓ CLI accepts commands
+
+====================================================
+Next Month Preview
+====================================================
+
+Month 2:
+- Scheduler
+- Configuration Manager
+- CRC Utility
+- SPI PAL
+- I2C PAL
+- EEPROM Driver
+- OLED Driver
+- Example Applications
+
+====================================================
+
+
+
++---------------------------------------------------------+
+|                 User Application Layer                  |
+|  Business Logic | State Machines | Product Features     |
++---------------------------------------------------------+
+|                 Application Services                    |
+| Logging | CLI | Config | Scheduler | Storage | OTA      |
++---------------------------------------------------------+
+|                  Middleware Layer                       |
+| MQTT | BLE | USB | FATFS | Modbus | CANopen | LoRa      |
++---------------------------------------------------------+
+|            Platform Abstraction Layer (PAL)             |
+| GPIO | UART | SPI | I2C | ADC | PWM | Timer | RTC | CAN |
++---------------------------------------------------------+
+|         MCU Adapter / Vendor HAL Wrapper                |
+| STM32 | NXP | Nordic | Renesas | TI | Infineon          |
++---------------------------------------------------------+
+|             Vendor HAL / CMSIS / Drivers                |
++---------------------------------------------------------+
+|               ARM Cortex-M Hardware                     |
++---------------------------------------------------------+
