@@ -9,6 +9,6 @@ int main(void)
     while (1)
     {
         pal_gpio_toggle(BOARD_GPIO_LED_STATUS);
-        pal_blocking_delay(500);
+        pal_blocking_delay(200);
     }
 }
