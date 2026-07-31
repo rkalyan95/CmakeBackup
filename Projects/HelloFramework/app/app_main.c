@@ -1,15 +1,14 @@
-#include <stdint.h>
-#include "dummy.h"
-
-uint8_t testvar = 90;
+#include "gpio.h"
+#include "board.h"
+#include "pal_gpio.h"
 
 int main(void)
 {
-     dummy();
+    board_init();
+
     while (1)
     {
-       
-         toggle();
-
+        pal_gpio_toggle(BOARD_GPIO_LED_STATUS);
+        pal_blocking_delay(500);
     }
 }
