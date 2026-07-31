@@ -31,6 +31,7 @@ file(GLOB_RECURSE ALL_BSP_C_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/nucleo_l433/generated/*.c"
 )
 
+list(REMOVE_DUPLICATES ALL_BSP_C_SOURCES)
 # Exclude generated main.c so application main.c acts as single entry point
 #list(FILTER ALL_BSP_C_SOURCES EXCLUDE REGEX ".*/Core/Src/main\\.c$")
 

@@ -4,8 +4,7 @@
 #include "board.h"
 #include "pal_status.h"
 
-#define PAL_ASSERT_NULL(ptr) \
-    PAL_ASSERT((ptr) != NULL, PAL_STATUS_INVALID_PARAM)
+
 
 #define PAL_ASSERT_GPIO(gpio) \
     PAL_ASSERT((gpio) < BOARD_GPIO_COUNT, PAL_STATUS_INVALID_PARAM)

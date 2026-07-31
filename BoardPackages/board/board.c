@@ -1,15 +1,17 @@
 #include "board.h"
-#include "stm32l4xx_hal.h"
+//#include "stm32l4xx_hal.h"
 #include "gpio.h"
+#include "usart.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void SystemClock_Config(void);
-
+extern UART_HandleTypeDef huart1;
 #ifdef __cplusplus
 }
 #endif
+
 
 const board_gpio_map_t board_gpio_map[BOARD_GPIO_COUNT] =
 {
@@ -26,6 +28,14 @@ const board_gpio_map_t board_gpio_map[BOARD_GPIO_COUNT] =
     }
 };
 
+const board_uart_map_t board_uart_map[BOARD_UART_COUNT] =
+{
+    [BOARD_UART_DEBUG] =
+    {
+        .handle = &huart1
+    }
+};
+
 void board_init(void)
 {
     HAL_Init();
@@ -33,4 +43,6 @@ void board_init(void)
     SystemClock_Config();
 
     MX_GPIO_Init();
+
+    MX_USART1_UART_Init();
 }
