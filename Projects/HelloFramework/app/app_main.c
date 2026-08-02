@@ -3,7 +3,9 @@
 #include "pal_spi.h"
 #include "spi.h"
 #include "pal_timer.h"
-
+#include "logger.h"
+#include "pal_adc.h"
+#include <stdio.h>
 void test_blink(void)
 {
      pal_gpio_toggle(BOARD_GPIO_LED_STATUS);
@@ -37,14 +39,19 @@ void test_spi_tle(void)
 static void led_timer_callback(void *context)
 {
     (void)context;
-
+    uint16_t adc_value = 16234;
     pal_gpio_toggle(BOARD_GPIO_LED_STATUS);
 
-    const uint8_t message[] = "Timer Interrupt!\r\n";
+   /* const uint8_t message[] = "Timer Interrupt!\r\n";
     pal_uart_transmit(
         BOARD_UART_DEBUG,
         message,
         sizeof(message) - 1);
+        */
+
+    logger_log(LOG_LEVEL_INFO,
+           "ADC = %u",
+           adc_value);
 }
 
 
@@ -89,7 +96,20 @@ void test_timer_interrupt(void)
     }
 }
 
+void test_adc(void)
+{
+    adc_value_t value;
 
+    while (1)
+    {
+        if (pal_adc_read(BOARD_ADC_1, &value) == PAL_STATUS_OK)
+        {
+            printf("ADC = %u\r\n", value);
+        }
+
+        pal_timer_delay_ms(500);
+    }
+}
 
 uint8_t crc8_sae_j1850(const uint8_t *data, size_t length) {
     // Initial value is 0xFF

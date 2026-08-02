@@ -4,6 +4,7 @@
 #include "spi.h"
 #include "usart.h"
 #include "tim.h"
+#include "adc.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -67,6 +68,14 @@ const board_timer_map_t board_timer_map[BOARD_TIMER_COUNT] =
     }
 };
 
+const board_adc_map_t board_adc_map[BOARD_ADC_COUNT] =
+{
+    [BOARD_ADC_1] =
+    {
+        .handle = &hadc1
+    }
+};
+
 
 board_timer_callback_t timer_callbacks[BOARD_TIMER_COUNT];
 
@@ -105,4 +114,6 @@ void board_init(void)
     MX_SPI2_Init();
 
     MX_TIM2_Init();
+
+    MX_ADC1_Init();
 }

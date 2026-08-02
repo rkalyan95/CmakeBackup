@@ -82,6 +82,23 @@ typedef struct
 
 extern board_timer_callback_t timer_callbacks[BOARD_TIMER_COUNT];
 
+typedef enum
+{
+    BOARD_ADC_1 = 0,
+
+    BOARD_ADC_COUNT
+
+} board_adc_t;
+
+
+typedef struct
+{
+    ADC_HandleTypeDef *handle;
+
+} board_adc_map_t;
+
+extern const board_adc_map_t board_adc_map[BOARD_ADC_COUNT];
+
 
 void board_init(void);
 
