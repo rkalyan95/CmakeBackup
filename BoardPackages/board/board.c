@@ -1,6 +1,7 @@
 #include "board.h"
 //#include "stm32l4xx_hal.h"
 #include "gpio.h"
+#include "spi.h"
 #include "usart.h"
 #ifdef __cplusplus
 extern "C" {
@@ -21,11 +22,21 @@ const board_gpio_map_t board_gpio_map[BOARD_GPIO_COUNT] =
         .pin  = GPIO_PIN_13
     },
 
-    [BOARD_GPIO_BUTTON_USER] =
+    [BOARD_GPIO_SPI_CS] =
+    {
+        .port = GPIOB,
+        .pin  = GPIO_PIN_6
+    },
+    [BOARD_GPIO_TLE_RST] =
+    {
+        .port = GPIOA,
+        .pin  = GPIO_PIN_12
+    },
+    [BOARD_GPIO_TLE_EN] =
     {
         .port = GPIOC,
-        .pin  = GPIO_PIN_13
-    }
+        .pin  = GPIO_PIN_7
+    },
 };
 
 const board_uart_map_t board_uart_map[BOARD_UART_COUNT] =
@@ -33,6 +44,14 @@ const board_uart_map_t board_uart_map[BOARD_UART_COUNT] =
     [BOARD_UART_DEBUG] =
     {
         .handle = &huart1
+    }
+};
+
+const board_spi_map_t board_spi_map[BOARD_SPI_COUNT] =
+{
+    [BOARD_SPI_1] =
+    {
+        .handle = &hspi2
     }
 };
 
@@ -45,4 +64,6 @@ void board_init(void)
     MX_GPIO_Init();
 
     MX_USART1_UART_Init();
+
+    MX_SPI2_Init();
 }

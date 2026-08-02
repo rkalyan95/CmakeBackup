@@ -6,8 +6,9 @@
 typedef enum
 {
     BOARD_GPIO_LED_STATUS,
-    BOARD_GPIO_BUTTON_USER,
-
+    BOARD_GPIO_SPI_CS,
+    BOARD_GPIO_TLE_RST,
+    BOARD_GPIO_TLE_EN,
     BOARD_GPIO_COUNT
 
 } board_gpio_t;
@@ -22,6 +23,11 @@ typedef enum
 
 } board_uart_t;
 
+typedef enum
+{
+    BOARD_SPI_1 = 0,
+    BOARD_SPI_COUNT
+} board_spi_t;
 
 typedef struct
 {
@@ -40,6 +46,13 @@ typedef struct
 
 extern const board_uart_map_t board_uart_map[];
 
+
+typedef struct
+{
+    SPI_HandleTypeDef *handle;
+} board_spi_map_t;
+
+extern const board_spi_map_t board_spi_map[BOARD_SPI_COUNT];
 
 void board_init(void);
 
