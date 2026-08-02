@@ -3,6 +3,7 @@
 #include "gpio.h"
 #include "spi.h"
 #include "usart.h"
+#include "tim.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -12,6 +13,7 @@ extern UART_HandleTypeDef huart1;
 #ifdef __cplusplus
 }
 #endif
+
 
 
 const board_gpio_map_t board_gpio_map[BOARD_GPIO_COUNT] =
@@ -55,6 +57,41 @@ const board_spi_map_t board_spi_map[BOARD_SPI_COUNT] =
     }
 };
 
+
+
+const board_timer_map_t board_timer_map[BOARD_TIMER_COUNT] =
+{
+    [BOARD_TIMER_1] =
+    {
+        .handle = &htim2
+    }
+};
+
+
+board_timer_callback_t timer_callbacks[BOARD_TIMER_COUNT];
+
+void board_timer_irq_handler(
+        board_timer_t timer)
+{
+    if (timer_callbacks[timer].callback != NULL)
+    {
+        timer_callbacks[timer].callback(
+            timer_callbacks[timer].context);
+    }
+}
+
+
+
+void HAL_TIM_PeriodElapsedCallback(
+        TIM_HandleTypeDef *htim)
+{
+    if(htim==board_timer_map[BOARD_TIMER_1].handle)
+    {
+        board_timer_irq_handler(BOARD_TIMER_1);
+    }
+}
+
+
 void board_init(void)
 {
     HAL_Init();
@@ -66,4 +103,6 @@ void board_init(void)
     MX_USART1_UART_Init();
 
     MX_SPI2_Init();
+
+    MX_TIM2_Init();
 }

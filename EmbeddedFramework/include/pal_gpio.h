@@ -22,7 +22,7 @@ pal_status_t pal_gpio_write(board_gpio_t gpio,
 pal_status_t pal_gpio_toggle(board_gpio_t gpio);
 
 pal_status_t pal_gpio_read(board_gpio_t gpio, pal_gpio_level_t *level);
-pal_status_t pal_blocking_delay(uint32_t milliseconds);
+
 
 
 #endif

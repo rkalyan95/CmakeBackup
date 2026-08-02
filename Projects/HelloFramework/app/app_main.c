@@ -2,10 +2,12 @@
 #include "pal_usart.h"
 #include "pal_spi.h"
 #include "spi.h"
+#include "pal_timer.h"
+
 void test_blink(void)
 {
      pal_gpio_toggle(BOARD_GPIO_LED_STATUS);
-     pal_blocking_delay(1000);
+     pal_timer_delay_ms(1000);
 }
 
 void test_uart_transmit(void)
@@ -22,15 +24,72 @@ void test_spi_tle(void)
 {
 
      pal_gpio_write(BOARD_GPIO_TLE_RST,0);
-     pal_blocking_delay(200);
+     pal_timer_delay_ms(200);
      pal_gpio_write(BOARD_GPIO_TLE_RST,1);
-     pal_blocking_delay(200);
+     pal_timer_delay_ms(200);
      pal_gpio_write(BOARD_GPIO_TLE_EN,1);
-     pal_blocking_delay(200);
+     pal_timer_delay_ms(200);
 
 
 
 }
+
+static void led_timer_callback(void *context)
+{
+    (void)context;
+
+    pal_gpio_toggle(BOARD_GPIO_LED_STATUS);
+
+    const uint8_t message[] = "Timer Interrupt!\r\n";
+    pal_uart_transmit(
+        BOARD_UART_DEBUG,
+        message,
+        sizeof(message) - 1);
+}
+
+
+void test_timer(void)
+{
+pal_timer_start(BOARD_TIMER_1);
+
+while (1)
+{
+    uint32_t count;
+
+    pal_timer_get_counter(BOARD_TIMER_1, &count);
+
+    if (count > 100000)
+    {
+        pal_gpio_toggle(BOARD_GPIO_LED_STATUS);
+
+        pal_timer_set_counter(BOARD_TIMER_1, 0);
+        test_uart_transmit();
+    }
+}
+}
+
+void test_timer_interrupt(void)
+{
+    /* Configure timer for 1 second */
+    pal_timer_stop(BOARD_TIMER_1);
+
+    pal_timer_set_counter(BOARD_TIMER_1, 0);
+    pal_timer_set_period(BOARD_TIMER_1, 999999);
+
+    pal_timer_register_callback(
+        BOARD_TIMER_1,
+        led_timer_callback,
+        NULL);
+
+    pal_timer_start_it(BOARD_TIMER_1);
+
+    while (1)
+    {
+        /* Do other work */
+    }
+}
+
+
 
 uint8_t crc8_sae_j1850(const uint8_t *data, size_t length) {
     // Initial value is 0xFF
@@ -99,16 +158,19 @@ int main(void)
      uint8_t response[4];
      board_init();
      test_spi_tle();
+     //test_timer();
+     test_timer_interrupt();
+    #if 0
     while (1)
     {
         
         test_blink();
-
+        //test_timer();
      pal_gpio_write(BOARD_GPIO_SPI_CS,0);
-    // pal_blocking_delay(1);
+    // pal_timer_delay_ms(1);
      pal_spi_transfer(BOARD_SPI_1 , command , response , 4);
      pal_gpio_write(BOARD_GPIO_SPI_CS,1);
-    // pal_blocking_delay(1);
+    // pal_timer_delay_ms(1);
      response[0] = 0;
      response[1] = 0;
      response[2] = 0;
@@ -117,7 +179,7 @@ int main(void)
     // pal_blocking_delay(1);
      pal_spi_transfer(BOARD_SPI_1 , command , response , 4);
      pal_gpio_write(BOARD_GPIO_SPI_CS,1);
-   // pal_blocking_delay(1);
+   // pal_timer_delay_ms(1);
 
 
      pal_uart_transmit(
@@ -127,7 +189,8 @@ int main(void)
         //test_uart_transmit();
 
 
-        pal_blocking_delay(1000);
+        pal_timer_delay_ms(1000);
     }
+    #endif
 }
 
