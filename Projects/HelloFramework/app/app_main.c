@@ -258,27 +258,27 @@ int main(void)
      test_spi_tle();
      //test_timer();
      //test_timer_interrupt();
-     test_cli();
-    #if 0
+     //test_cli();
+   
     while (1)
     {
         
-        test_blink();
+        //test_blink();
         //test_timer();
      pal_gpio_write(BOARD_GPIO_SPI_CS,0);
-    // pal_timer_delay_ms(1);
+     pal_timer_delay_ms(1);
      pal_spi_transfer(BOARD_SPI_1 , command , response , 4);
      pal_gpio_write(BOARD_GPIO_SPI_CS,1);
-    // pal_timer_delay_ms(1);
+     pal_timer_delay_ms(1);
      response[0] = 0;
      response[1] = 0;
      response[2] = 0;
      response[3] = 0;
      pal_gpio_write(BOARD_GPIO_SPI_CS,0);
-    // pal_blocking_delay(1);
+     pal_timer_delay_ms(1);
      pal_spi_transfer(BOARD_SPI_1 , command , response , 4);
      pal_gpio_write(BOARD_GPIO_SPI_CS,1);
-   // pal_timer_delay_ms(1);
+    pal_timer_delay_ms(1);
 
 
      pal_uart_transmit(
@@ -290,6 +290,6 @@ int main(void)
 
         pal_timer_delay_ms(1000);
     }
-    #endif
+    
 }
 
