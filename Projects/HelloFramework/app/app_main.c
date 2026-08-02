@@ -6,6 +6,35 @@
 #include "logger.h"
 #include "pal_adc.h"
 #include <stdio.h>
+#include "cli.h"
+
+static void cmd_led(uint8_t argc, char *argv[])
+{
+    (void)argc;
+    (void)argv;
+
+    pal_gpio_toggle(BOARD_GPIO_LED_STATUS);
+
+    log_info("LED toggled");
+}
+
+static void cmd_adc(uint8_t argc, char *argv[])
+{
+    (void)argc;
+    (void)argv;
+
+    adc_value_t value;
+
+    if(pal_adc_read(BOARD_ADC_1, &value) == PAL_STATUS_OK)
+    {
+        log_info("ADC = %u", value);
+    }
+    else
+    {
+        log_error("ADC Read Failed");
+    }
+}
+
 void test_blink(void)
 {
      pal_gpio_toggle(BOARD_GPIO_LED_STATUS);
@@ -111,6 +140,55 @@ void test_adc(void)
     }
 }
 
+void test_cli(void)
+{
+    cli_init();
+cli_register("adc-read",
+             1,
+             1,
+             "adc-read",
+             cmd_adc);
+#if 0
+cli_register("tle-init",
+             1,
+             1,
+             "tle-init",
+             cmd_tle_init);
+
+cli_register("tle-read",
+             2,
+             2,
+             "tle-read <register>",
+             cmd_tle_read);
+
+cli_register("tle-write",
+             3,
+             3,
+             "tle-write <register> <value>",
+             cmd_tle_write);
+#endif
+cli_register("gpio-toggle",
+             1,
+             1,
+             "gpio-toggle",
+             cmd_led);
+
+    while(1)
+    {
+        uint8_t c;
+
+        if(pal_uart_receive(BOARD_UART_DEBUG,
+                            &c,
+                            1) == PAL_STATUS_OK)
+        {
+            cli_receive_char((char)c);
+        }
+
+        cli_process();
+    }
+
+}
+
 uint8_t crc8_sae_j1850(const uint8_t *data, size_t length) {
     // Initial value is 0xFF
     uint8_t crc = 0xFF; 
@@ -179,7 +257,8 @@ int main(void)
      board_init();
      test_spi_tle();
      //test_timer();
-     test_timer_interrupt();
+     //test_timer_interrupt();
+     test_cli();
     #if 0
     while (1)
     {
