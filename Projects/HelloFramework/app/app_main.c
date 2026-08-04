@@ -7,7 +7,7 @@
 #include "pal_adc.h"
 #include <stdio.h>
 #include "cli.h"
-
+#include "tle92466.h"
 static void cmd_led(uint8_t argc, char *argv[])
 {
     (void)argc;
@@ -189,104 +189,72 @@ cli_register("gpio-toggle",
 
 }
 
-uint8_t crc8_sae_j1850(const uint8_t *data, size_t length) {
-    // Initial value is 0xFF
-    uint8_t crc = 0xFF; 
-
-    for (size_t i = 0; i < length; i++) {
-        // XOR the input byte into the CRC register
-        crc ^= data[i]; 
-
-        for (int bit = 0; bit < 8; bit++) {
-            if (crc & 0x80) {
-                // If the MSB is 1, shift and XOR with polynomial 0x1D
-                crc = (crc << 1) ^ 0x1D;
-            } else {
-                // Otherwise, just shift left
-                crc <<= 1;
-            }
-        }
-    }
-
-    // Final XOR value is 0xFF
-    return crc ^ 0xFF; 
-}
 
 
-uint32_t spi_write_frame(uint16_t addr, uint16_t data) {
 
-    uint32_t payload = (((uint32_t)(addr & 0x7F) << 17) | (1U << 16) | (uint32_t)data) & 0x00FFFFFF;
-
-    // Pack bytes explicitly in Big-Endian order (MSB first)
-    uint8_t frame_bytes[3];
-    frame_bytes[0] = (uint8_t)(payload >> 16); // Byte 0 (Header/Addr)
-    frame_bytes[1] = (uint8_t)(payload >> 8);  // Byte 1 (Data High)
-    frame_bytes[2] = (uint8_t)(payload & 0xFF); // Byte 2 (Data Low)
-
-    // Calculate CRC over the 3-byte payload
-    uint8_t crc = crc8_sae_j1850(frame_bytes, 3);
-
-    // Append CRC into the top byte (Bits 31..24)
-    uint32_t frame = ((uint32_t)crc << 24) | payload;
-
-    return frame;
-}
-
-uint32_t spi_read_frame(uint16_t addr) {
-    uint8_t rw_bit = 0;
-    
-    uint32_t payload = ((0x00000000U << 17) | ((uint32_t)rw_bit << 16) | addr) & 0x00FFFFFF;
-
-    // Calculate CRC over the big-endian byte stream
-    uint8_t crc = crc8_sae_j1850((uint8_t *)&payload, 3);
-
-    // Combine CRC (MSB) with 24-bit payload to form 32-bit frame
-    uint32_t frame = ((uint32_t)crc << 24) | payload;
-
-    return frame;
-}
 
 
 int main(void)
 {
      
-     uint32_t cmd = 0x69000200;
-     
-     uint8_t command[4] = {((cmd & 0xff000000)>>24),((cmd & 0x00ff0000)>>16),((cmd & 0x0000ff00)>>8),(cmd & 0x000000ff)};
-     uint8_t response[4];
+    uint16_t tleversion = 0;
+    uint16_t glb_cfg = 0;
+    uint32_t cmd = 0;
+    uint16_t data_reg = 0x5005;
      board_init();
      test_spi_tle();
      //test_timer();
      //test_timer_interrupt();
      //test_cli();
-   
+     const uint8_t message[] =
+        "\r\n --New Data Set--\r\n";
+   cli_init();
     while (1)
     {
         
         //test_blink();
         //test_timer();
-     pal_gpio_write(BOARD_GPIO_SPI_CS,0);
-     pal_timer_delay_ms(1);
-     pal_spi_transfer(BOARD_SPI_1 , command , response , 4);
-     pal_gpio_write(BOARD_GPIO_SPI_CS,1);
-     pal_timer_delay_ms(1);
-     response[0] = 0;
-     response[1] = 0;
-     response[2] = 0;
-     response[3] = 0;
-     pal_gpio_write(BOARD_GPIO_SPI_CS,0);
-     pal_timer_delay_ms(1);
-     pal_spi_transfer(BOARD_SPI_1 , command , response , 4);
-     pal_gpio_write(BOARD_GPIO_SPI_CS,1);
-    pal_timer_delay_ms(1);
+
+        cmd = tle_write_glb_cfg(data_reg);
+        logger_log(LOG_LEVEL_INFO,
+           "CMD_GLBCFG = %x",
+           cmd);
+        logger_log(LOG_LEVEL_INFO,
+           "GLB_DATA = %x",
+           data_reg); 
 
 
-     pal_uart_transmit(
+        cmd = tle_read_version(&tleversion);
+        logger_log(LOG_LEVEL_INFO,
+           "CMD = %x",
+           cmd);
+        logger_log(LOG_LEVEL_INFO,
+           "RESP = %x",
+           version_value.raw);
+        logger_log(LOG_LEVEL_INFO,
+           "Version = %x",
+           tleversion);
+        cmd = tle_read_glb_cfg(&glb_cfg);
+        logger_log(LOG_LEVEL_INFO,
+           "READ_GLBCFG = %x",
+           cmd);  
+        logger_log(LOG_LEVEL_INFO,
+           "RESP_GLBRAW = %x",
+           global_config_value.raw);      
+        logger_log(LOG_LEVEL_INFO,
+           "RegVal = %x",
+           glb_cfg);
+
+        logger_log(LOG_LEVEL_INFO,
+           "%s",
+           message);
+     /*pal_uart_transmit(
             BOARD_UART_DEBUG,
-            response,
-            sizeof(response));
+            (uint8_t *)&version,
+            sizeof(version));
         //test_uart_transmit();
-
+*/
+        
 
         pal_timer_delay_ms(1000);
     }
