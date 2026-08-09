@@ -189,7 +189,342 @@ cli_register("gpio-toggle",
 
 }
 
+void tle_sm(void)
+{
+    uint8_t rst_lvl = 1;
+    pal_gpio_read(BOARD_GPIO_TLE_RST,&rst_lvl);
+    if(rst_lvl!= 0)
+    {
+        return;
+    }
 
+    #if 0
+    switch(sm)
+    {
+        case 0:
+            break;
+        case 1:
+            break;
+        case 2:
+            break;
+        case 3:
+            break;
+        default:
+            break;
+    }
+    uint32_t cmd;
+    uint16_t value;
+    uint16_t test_data = 0x5005;  
+    
+#endif
+}
+
+void test_tle_comm(void)
+{
+    uint32_t cmd;
+    uint16_t value;
+    uint32_t fb_stat_reg;
+    uint32_t fb_voltage1_reg;
+    uint32_t fb_voltage2_reg;
+    uint16_t test_data = 0x5005;
+
+    /*-------------------- Write Registers --------------------*/
+
+    cmd = tle_write_ch_ctrl(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR CH_CTRL      CMD = %08X", cmd);
+
+    cmd = tle_write_glb_cfg(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR GLB_CFG      CMD = %08X", cmd);
+
+    cmd = tle_write_glb_diag0(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR GLB_DIAG0    CMD = %08X", cmd);
+
+    cmd = tle_write_glb_diag1(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR GLB_DIAG1    CMD = %08X", cmd);
+
+    cmd = tle_write_glb_diag2(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR GLB_DIAG2    CMD = %08X", cmd);
+
+    cmd = tle_write_vbat_th(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR VBAT_TH      CMD = %08X", cmd);
+
+    cmd = tle_write_fb_frz(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR FB_FRZ       CMD = %08X", cmd);
+
+    cmd = tle_write_fb_upd(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR FB_UPD       CMD = %08X", cmd);
+
+    cmd = tle_write_wd_reload(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR WD_RELOAD    CMD = %08X", cmd);
+
+    cmd = tle_write_diag_err_chgr(0, test_data);
+    logger_log(LOG_LEVEL_INFO, "WR DIAG_ERR0    CMD = %08X", cmd);
+
+    cmd = tle_write_diag_warn_chgr(0, test_data);
+    logger_log(LOG_LEVEL_INFO, "WR DIAG_WARN0   CMD = %08X", cmd);
+
+    cmd = tle_write_fault_mask0(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR FAULT_MASK0  CMD = %08X", cmd);
+
+    cmd = tle_write_fault_mask1(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR FAULT_MASK1  CMD = %08X", cmd);
+
+    cmd = tle_write_fault_mask2(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR FAULT_MASK2  CMD = %08X", cmd);
+
+    cmd = tle_write_clk_div(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR CLK_DIV      CMD = %08X", cmd);
+
+    cmd = tle_write_sff_bist(test_data);
+    logger_log(LOG_LEVEL_INFO, "WR SFF_BIST     CMD = %08X", cmd);
+
+    /*-------------------- Read Registers --------------------*/
+
+    cmd = tle_read_version(&value);
+    logger_log(LOG_LEVEL_INFO, "VERSION   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, version_value.raw, value);
+
+    cmd = tle_read_ch_ctrl(&value);
+    logger_log(LOG_LEVEL_INFO, "CH_CTRL   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, ch_ctrl_value.raw, value);
+
+    cmd = tle_read_glb_cfg(&value);
+    logger_log(LOG_LEVEL_INFO, "GLB_CFG   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, global_config_value.raw, value);
+
+    cmd = tle_read_glb_diag0(&value);
+    logger_log(LOG_LEVEL_INFO, "GLB_DG0   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, global_diag0_value.raw, value);
+
+    cmd = tle_read_glb_diag1(&value);
+    logger_log(LOG_LEVEL_INFO, "GLB_DG1   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, global_diag1_value.raw, value);
+
+    cmd = tle_read_glb_diag2(&value);
+    logger_log(LOG_LEVEL_INFO, "GLB_DG2   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, global_diag2_value.raw, value);
+
+    cmd = tle_read_vbat_th(&value);
+    logger_log(LOG_LEVEL_INFO, "VBAT_TH   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, vbat_th_value.raw, value);
+
+    cmd = tle_read_fb_frz(&value);
+    logger_log(LOG_LEVEL_INFO, "FB_FRZ    CMD=%08X RAW=%08X DATA=%04X",
+               cmd, fb_frz_value.raw, value);
+
+    cmd = tle_read_fb_upd(&value);
+    logger_log(LOG_LEVEL_INFO, "FB_UPD    CMD=%08X RAW=%08X DATA=%04X",
+               cmd, fb_upd_value.raw, value);
+
+    cmd = tle_read_wd_reload(&value);
+    logger_log(LOG_LEVEL_INFO, "WD_RELD   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, wd_reload_value.raw, value);
+
+    cmd = tle_read_diag_err_chgr(0, &value);
+    logger_log(LOG_LEVEL_INFO, "ERR_CH0   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, diag_err_chgr_value.raw, value);
+
+    cmd = tle_read_diag_warn_chgr(0, &value);
+    logger_log(LOG_LEVEL_INFO, "WARN_CH0  CMD=%08X RAW=%08X DATA=%04X",
+               cmd, diag_warn_chgr_value.raw, value);
+
+    cmd = tle_read_fault_mask0(&value);
+    logger_log(LOG_LEVEL_INFO, "FLT_MSK0  CMD=%08X RAW=%08X DATA=%04X",
+               cmd, fault_mask0_value.raw, value);
+
+    cmd = tle_read_fault_mask1(&value);
+    logger_log(LOG_LEVEL_INFO, "FLT_MSK1  CMD=%08X RAW=%08X DATA=%04X",
+               cmd, fault_mask1_value.raw, value);
+
+    cmd = tle_read_fault_mask2(&value);
+    logger_log(LOG_LEVEL_INFO, "FLT_MSK2  CMD=%08X RAW=%08X DATA=%04X",
+               cmd, fault_mask2_value.raw, value);
+
+    cmd = tle_read_clk_div(&value);
+    logger_log(LOG_LEVEL_INFO, "CLK_DIV   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, clk_div_value.raw, value);
+
+    cmd = tle_read_sff_bist(&value);
+    logger_log(LOG_LEVEL_INFO, "SFF_BIST  CMD=%08X RAW=%08X DATA=%04X",
+               cmd, sff_bist_value.raw, value);
+
+    cmd = tle_read_pin_stat(&value);
+    logger_log(LOG_LEVEL_INFO, "PIN_STAT  CMD=%08X RAW=%08X DATA=%04X",
+               cmd, pin_stat_value.raw, value);
+
+    cmd = tle_read_fb_stat(&fb_stat_reg);
+    logger_log(LOG_LEVEL_INFO, "FB_STAT      CMD=%08X RAW=%08X DATA=%04X",
+            cmd, fb_stat_value.raw, fb_stat_reg);
+
+    cmd = tle_read_fb_voltage1(&fb_voltage1_reg);
+    logger_log(LOG_LEVEL_INFO, "FB_VOLTAGE1  CMD=%08X RAW=%08X DATA=%04X",
+            cmd, fb_voltage1_value.raw, fb_voltage1_reg);
+
+    cmd = tle_read_fb_voltage2(&fb_voltage2_reg);
+    logger_log(LOG_LEVEL_INFO, "FB_VOLTAGE2  CMD=%08X RAW=%08X DATA=%04X",
+            cmd, fb_voltage2_value.raw, fb_voltage2_reg);
+
+/*-------------------- Read Channel Registers --------------------*/
+
+/*-------------------- Read Channel Registers --------------------*/
+
+uint16_t channel_value;
+uint32_t channel_fb_value;
+
+for (uint8_t channel = 0U; channel < 6U; channel++)
+{
+    uint32_t base = CHANNEL_BASE_ADDR(channel);
+
+    /*-------------------- 16-bit Registers --------------------*/
+
+    cmd = tle_read_setpoint(base, channel, &channel_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_SETPOINT       CMD=%08X RAW=%08X DATA=%04X",
+               channel,
+               cmd,
+               set_point_value[channel].raw,
+               channel_value);
+
+    cmd = tle_read_ctrl(base, channel, &channel_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_CTRL           CMD=%08X RAW=%08X DATA=%04X",
+               channel,
+               cmd,
+               ctrl_value[channel].raw,
+               channel_value);
+
+    cmd = tle_read_period(base, channel, &channel_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_PERIOD         CMD=%08X RAW=%08X DATA=%04X",
+               channel,
+               cmd,
+               period_value[channel].raw,
+               channel_value);
+
+    cmd = tle_read_integrator_limit(base, channel, &channel_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_INT_LIMIT      CMD=%08X RAW=%08X DATA=%04X",
+               channel,
+               cmd,
+               integrator_limit_value[channel].raw,
+               channel_value);
+
+    cmd = tle_read_dither_clk_div(base, channel, &channel_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_DITHER_CLK_DIV CMD=%08X RAW=%08X DATA=%04X",
+               channel,
+               cmd,
+               dither_clk_div_value[channel].raw,
+               channel_value);
+
+    cmd = tle_read_dither_step(base, channel, &channel_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_DITHER_STEP    CMD=%08X RAW=%08X DATA=%04X",
+               channel,
+               cmd,
+               dither_step_value[channel].raw,
+               channel_value);
+
+    cmd = tle_read_dither_ctrl(base, channel, &channel_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_DITHER_CTRL    CMD=%08X RAW=%08X DATA=%04X",
+               channel,
+               cmd,
+               dither_ctrl_value[channel].raw,
+               channel_value);
+
+    cmd = tle_read_ch_config(base, channel, &channel_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_CH_CONFIG      CMD=%08X RAW=%08X DATA=%04X",
+               channel,
+               cmd,
+               ch_config_value[channel].raw,
+               channel_value);
+
+    cmd = tle_read_mode(base, channel, &channel_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_MODE           CMD=%08X RAW=%08X DATA=%04X",
+               channel,
+               cmd,
+               mode_value[channel].raw,
+               channel_value);
+
+    cmd = tle_read_ton(base, channel, &channel_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_TON            CMD=%08X RAW=%08X DATA=%04X",
+               channel,
+               cmd,
+               ton_value[channel].raw,
+               channel_value);
+
+    cmd = tle_read_ctrl_int_thresh(base, channel, &channel_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_CTRL_INT_THRESH CMD=%08X RAW=%08X DATA=%04X",
+               channel,
+               cmd,
+               ctrl_int_thresh_value[channel].raw,
+               channel_value);
+
+
+    /*-------------------- 22-bit Feedback Registers --------------------*/
+
+    cmd = tle_read_fb_dc(base, channel, &channel_fb_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_FB_DC          CMD=%08X RAW=%08X DATA=%06X",
+               channel,
+               cmd,
+               fb_dc_value[channel].raw,
+               channel_fb_value);
+
+    cmd = tle_read_fb_vbat(base, channel, &channel_fb_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_FB_VBAT        CMD=%08X RAW=%08X DATA=%06X",
+               channel,
+               cmd,
+               fb_vbat_value[channel].raw,
+               channel_fb_value);
+
+    cmd = tle_read_fb_i_avg(base, channel, &channel_fb_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_FB_I_AVG       CMD=%08X RAW=%08X DATA=%06X",
+               channel,
+               cmd,
+               fb_i_avg_value[channel].raw,
+               channel_fb_value);
+
+    cmd = tle_read_fb_imin_imax(base, channel, &channel_fb_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_FB_IMIN_IMAX   CMD=%08X RAW=%08X DATA=%06X",
+               channel,
+               cmd,
+               fb_imin_imax_value[channel].raw,
+               channel_fb_value);
+
+    cmd = tle_read_fb_i_avg_s16(base, channel, &channel_fb_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_FB_I_AVG_S16   CMD=%08X RAW=%08X DATA=%06X",
+               channel,
+               cmd,
+               fb_i_avg_s16_value[channel].raw,
+               channel_fb_value);
+
+    cmd = tle_read_fb_int_thresh(base, channel, &channel_fb_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_FB_INT_THRESH  CMD=%08X RAW=%08X DATA=%06X",
+               channel,
+               cmd,
+               fb_int_thresh_value[channel].raw,
+               channel_fb_value);
+
+    cmd = tle_read_fb_period_min_max(base, channel, &channel_fb_value);
+    logger_log(LOG_LEVEL_INFO,
+               "CH%u_FB_PERIOD_MINMX CMD=%08X RAW=%08X DATA=%06X",
+               channel,
+               cmd,
+               fb_period_min_max_value[channel].raw,
+               channel_fb_value);
+}
+}
 
 
 
@@ -214,47 +549,7 @@ int main(void)
         
         //test_blink();
         //test_timer();
-
-        cmd = tle_write_glb_cfg(data_reg);
-        logger_log(LOG_LEVEL_INFO,
-           "CMD_GLBCFG = %x",
-           cmd);
-        logger_log(LOG_LEVEL_INFO,
-           "GLB_DATA = %x",
-           data_reg); 
-
-
-        cmd = tle_read_version(&tleversion);
-        logger_log(LOG_LEVEL_INFO,
-           "CMD = %x",
-           cmd);
-        logger_log(LOG_LEVEL_INFO,
-           "RESP = %x",
-           version_value.raw);
-        logger_log(LOG_LEVEL_INFO,
-           "Version = %x",
-           tleversion);
-        cmd = tle_read_glb_cfg(&glb_cfg);
-        logger_log(LOG_LEVEL_INFO,
-           "READ_GLBCFG = %x",
-           cmd);  
-        logger_log(LOG_LEVEL_INFO,
-           "RESP_GLBRAW = %x",
-           global_config_value.raw);      
-        logger_log(LOG_LEVEL_INFO,
-           "RegVal = %x",
-           glb_cfg);
-
-        logger_log(LOG_LEVEL_INFO,
-           "%s",
-           message);
-     /*pal_uart_transmit(
-            BOARD_UART_DEBUG,
-            (uint8_t *)&version,
-            sizeof(version));
-        //test_uart_transmit();
-*/
-        
+        test_tle_comm();
 
         pal_timer_delay_ms(1000);
     }
