@@ -1052,4 +1052,17 @@ uint32_t tle_read_fb_int_thresh(uint32_t base,
 uint32_t tle_read_fb_period_min_max(uint32_t base,
                                     uint8_t channel,
                                     uint32_t *fb_period_min_max);
+
+uint32_t tle_write_setpoint(uint8_t channel, uint16_t value);
+uint32_t tle_write_ctrl(uint8_t channel, uint16_t value);
+uint32_t tle_write_period(uint8_t channel, uint16_t value);
+uint32_t tle_write_integrator_limit(uint8_t channel, uint16_t value);
+uint32_t tle_write_dither_clk_div(uint8_t channel, uint16_t value);
+uint32_t tle_write_dither_step(uint8_t channel, uint16_t value);
+uint32_t tle_write_dither_ctrl(uint8_t channel, uint16_t value);
+uint32_t tle_write_ch_config(uint8_t channel, uint16_t value);
+
+uint32_t tle_write_mode(uint8_t channel, uint16_t value);
+uint32_t tle_write_ton(uint8_t channel, uint16_t value);
+uint32_t tle_write_ctrl_int_thresh(uint8_t channel, uint16_t value);
 #endif

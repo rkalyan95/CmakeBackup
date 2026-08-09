@@ -280,6 +280,7 @@ void test_tle_comm(void)
 
     /*-------------------- Read Registers --------------------*/
 
+
     cmd = tle_read_version(&value);
     logger_log(LOG_LEVEL_INFO, "VERSION   CMD=%08X RAW=%08X DATA=%04X",
                cmd, version_value.raw, value);
@@ -370,7 +371,8 @@ void test_tle_comm(void)
 
 uint16_t channel_value;
 uint32_t channel_fb_value;
-
+    cmd = tle_write_integrator_limit(0, 0x43FE);
+    logger_log(LOG_LEVEL_INFO, "WR INT_LIMIT    CMD = %08X", cmd);
 for (uint8_t channel = 0U; channel < 6U; channel++)
 {
     uint32_t base = CHANNEL_BASE_ADDR(channel);

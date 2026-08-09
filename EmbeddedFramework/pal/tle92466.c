@@ -713,3 +713,81 @@ uint32_t tle_read_fb_period_min_max(uint32_t base,
 
     return cmd;
 }
+
+
+uint32_t tle_write_setpoint(uint8_t channel, uint16_t value)
+{
+    return tle_write_register(
+        SETPOINT_ADDR(CHANNEL_BASE_ADDR(channel)),
+        value);
+}
+
+uint32_t tle_write_ctrl(uint8_t channel, uint16_t value)
+{
+    return tle_write_register(
+        CTRL_ADDR(CHANNEL_BASE_ADDR(channel)),
+        value);
+}
+
+uint32_t tle_write_period(uint8_t channel, uint16_t value)
+{
+    return tle_write_register(
+        PERIOD_ADDR(CHANNEL_BASE_ADDR(channel)),
+        value);
+}
+
+uint32_t tle_write_integrator_limit(uint8_t channel, uint16_t value)
+{
+    return tle_write_register(
+        INTEGRATOR_LIMIT_ADDR(CHANNEL_BASE_ADDR(channel)),
+        value);
+}
+
+uint32_t tle_write_dither_clk_div(uint8_t channel, uint16_t value)
+{
+    return tle_write_register(
+        DITHER_CLK_DIV_ADDR(CHANNEL_BASE_ADDR(channel)),
+        value);
+}
+
+uint32_t tle_write_dither_step(uint8_t channel, uint16_t value)
+{
+    return tle_write_register(
+        DITHER_STEP_ADDR(CHANNEL_BASE_ADDR(channel)),
+        value);
+}
+
+uint32_t tle_write_dither_ctrl(uint8_t channel, uint16_t value)
+{
+    return tle_write_register(
+        DITHER_CTRL_ADDR(CHANNEL_BASE_ADDR(channel)),
+        value);
+}
+
+uint32_t tle_write_ch_config(uint8_t channel, uint16_t value)
+{
+    return tle_write_register(
+        CH_CONFIG_ADDR(CHANNEL_BASE_ADDR(channel)),
+        value);
+}
+
+uint32_t tle_write_mode(uint8_t channel, uint16_t value)
+{
+    return tle_write_register(
+        MODE_ADDR(CHANNEL_BASE_ADDR(channel)),
+        value);
+}
+
+uint32_t tle_write_ton(uint8_t channel, uint16_t value)
+{
+    return tle_write_register(
+        TON_ADDR(CHANNEL_BASE_ADDR(channel)),
+        value);
+}
+
+uint32_t tle_write_ctrl_int_thresh(uint8_t channel, uint16_t value)
+{
+    return tle_write_register(
+        CTRL_INT_THRESH_ADDR(CHANNEL_BASE_ADDR(channel)),
+        value);
+}
