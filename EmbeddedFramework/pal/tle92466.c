@@ -64,6 +64,10 @@ reply_22bit_union_t fb_voltage2_value;
 
   reply_22bit_union_t fb_period_min_max_value[6];
 
+faults_tle_t tle_central_faults;
+fb_status_data_t fb_status_data;
+channel_fb_status_data_t channel_fb_status_data[6];
+
 static uint8_t crc8_sae_j1850(const uint8_t *data, size_t length) {
     // Initial value is 0xFF
     uint8_t crc = 0xFF; 
@@ -135,6 +139,10 @@ static uint32_t tle_read_register(uint16_t reg_addr,uint32_t *regdata)
      rx_data[3] = 0;
      pal_gpio_write(BOARD_GPIO_SPI_CS,0);
      pal_timer_delay_ms(4);
+     tx_cmd[0] = 0;
+     tx_cmd[1] = 0;
+     tx_cmd[2] = 0;
+     tx_cmd[3] = 0;
      pal_spi_transfer(BOARD_SPI_1 , tx_cmd , rx_data , 4);
      pal_gpio_write(BOARD_GPIO_SPI_CS,1);
     pal_timer_delay_ms(4);
@@ -790,4 +798,497 @@ uint32_t tle_write_ctrl_int_thresh(uint8_t channel, uint16_t value)
     return tle_write_register(
         CTRL_INT_THRESH_ADDR(CHANNEL_BASE_ADDR(channel)),
         value);
+}
+
+void update_fault_structure(void)
+{
+    uint16_t reg_value = 0;
+
+    /* ============================================================
+     * GLOBAL_DIAG0
+     * ============================================================ */
+
+    tle_read_glb_diag0(&reg_value);
+
+    tle_central_faults.vbat_under_volt_flt =
+        ((reg_value & GLOBAL_DIAG0_VBAT_UV_msk) >>
+         GLOBAL_DIAG0_VBAT_UV_pos);
+
+    tle_central_faults.vbat_over_volt_flt =
+        ((reg_value & GLOBAL_DIAG0_VBAT_OV_msk) >>
+         GLOBAL_DIAG0_VBAT_OV_pos);
+
+    tle_central_faults.vio_under_volt_flt =
+        ((reg_value & GLOBAL_DIAG0_VIO_UV_msk) >>
+         GLOBAL_DIAG0_VIO_UV_pos);
+
+    tle_central_faults.vio_over_volt_flt =
+        ((reg_value & GLOBAL_DIAG0_VIO_OV_msk) >>
+         GLOBAL_DIAG0_VIO_OV_pos);
+
+    tle_central_faults.vdd_under_volt_flt =
+        ((reg_value & GLOBAL_DIAG0_VDD_UV_msk) >>
+         GLOBAL_DIAG0_VDD_UV_pos);
+
+    tle_central_faults.vdd_over_volt_flt =
+        ((reg_value & GLOBAL_DIAG0_VDD_OV_msk) >>
+         GLOBAL_DIAG0_VDD_OV_pos);
+
+    tle_central_faults.clock_flt =
+        ((reg_value & GLOBAL_DIAG0_CLK_NOK_msk) >>
+         GLOBAL_DIAG0_CLK_NOK_pos);
+
+    tle_central_faults.central_over_temp_err =
+        ((reg_value & GLOBAL_DIAG0_COTERR_msk) >>
+         GLOBAL_DIAG0_COTERR_pos);
+
+    tle_central_faults.central_over_temp_warn =
+        ((reg_value & GLOBAL_DIAG0_COTWARN_msk) >>
+         GLOBAL_DIAG0_COTWARN_pos);
+
+    tle_central_faults.reset_event =
+        ((reg_value & GLOBAL_DIAG0_RES_EVENT_msk) >>
+         GLOBAL_DIAG0_RES_EVENT_pos);
+
+    tle_central_faults.power_on_reset_event =
+        ((reg_value & GLOBAL_DIAG0_POR_EVENT_msk) >>
+         GLOBAL_DIAG0_POR_EVENT_pos);
+
+    tle_central_faults.spi_watchdog_flt =
+        ((reg_value & GLOBAL_DIAG0_SPI_WD_ERR_msk) >>
+         GLOBAL_DIAG0_SPI_WD_ERR_pos);
+
+
+    /* ============================================================
+     * GLOBAL_DIAG1
+     * ============================================================ */
+    reg_value = 0;
+    tle_read_glb_diag1(&reg_value);
+
+    tle_central_faults.vref_i_under_volt_flt =
+        ((reg_value & GLOBAL_DIAG1_VR_IREF_UV_msk) >>
+         GLOBAL_DIAG1_VR_IREF_UV_pos);
+
+    tle_central_faults.vref_i_over_volt_flt =
+        ((reg_value & GLOBAL_DIAG1_VR_IREF_OV_msk) >>
+         GLOBAL_DIAG1_VR_IREF_OV_pos);
+
+    tle_central_faults.vdd_2v5_under_volt_flt =
+        ((reg_value & GLOBAL_DIAG1_VDD2V5_UV_msk) >>
+         GLOBAL_DIAG1_VDD2V5_UV_pos);
+
+    tle_central_faults.vdd_2v5_over_volt_flt =
+        ((reg_value & GLOBAL_DIAG1_VDD2V5_OV_msk) >>
+         GLOBAL_DIAG1_VDD2V5_OV_pos);
+
+    tle_central_faults.ref_under_volt_flt =
+        ((reg_value & GLOBAL_DIAG1_REF_UV_msk) >>
+         GLOBAL_DIAG1_REF_UV_pos);
+
+    tle_central_faults.ref_over_volt_flt =
+        ((reg_value & GLOBAL_DIAG1_REF_OV_msk) >>
+         GLOBAL_DIAG1_REF_OV_pos);
+
+    tle_central_faults.vpre_over_volt_flt =
+        ((reg_value & GLOBAL_DIAG1_VPRE_OV_msk) >>
+         GLOBAL_DIAG1_VPRE_OV_pos);
+
+    tle_central_faults.hv_adc_flt =
+        ((reg_value & GLOBAL_DIAG1_HVADC_ERR_msk) >>
+         GLOBAL_DIAG1_HVADC_ERR_pos);
+
+
+    /* ============================================================
+     * GLOBAL_DIAG2
+     * ============================================================ */
+    reg_value = 0;
+    tle_read_glb_diag2(&reg_value);
+
+    tle_central_faults.register_ecc_flt =
+        ((reg_value & GLOBAL_DIAG2_REG_ECC_ERR_msk) >>
+         GLOBAL_DIAG2_REG_ECC_ERR_pos);
+
+    tle_central_faults.otp_ecc_flt =
+        ((reg_value & GLOBAL_DIAG2_OTP_ECC_ERR_msk) >>
+         GLOBAL_DIAG2_OTP_ECC_ERR_pos);
+
+    tle_central_faults.otp_virgin_flt =
+        ((reg_value & GLOBAL_DIAG2_OTP_VIRGIN_msk) >>
+         GLOBAL_DIAG2_OTP_VIRGIN_pos);
+}
+
+void update_fb_status_data(void)
+{
+    uint16_t reg_value = 0;
+    uint32_t reg_value_24bit = 0;
+    /* ============================================================
+     * PIN_STAT
+     * ============================================================ */
+
+    tle_read_pin_stat(&reg_value);
+
+    fb_status_data.drv0_status =
+        ((reg_value & PIN_STAT_DRV0_msk) >>
+         PIN_STAT_DRV0_pos);
+
+    fb_status_data.drv1_status =
+        ((reg_value & PIN_STAT_DRV1_msk) >>
+         PIN_STAT_DRV1_pos);
+
+    fb_status_data.en_status =
+        ((reg_value & PIN_STAT_EN_msk) >>
+         PIN_STAT_EN_pos);
+
+    fb_status_data.faultn_status =
+        ((reg_value & PIN_STAT_FAULTN_msk) >>
+         PIN_STAT_FAULTN_pos);
+
+    fb_status_data.faultn_fb_status =
+        ((reg_value & PIN_STAT_FAULTN_FB_msk) >>
+         PIN_STAT_FAULTN_FB_pos);
+
+
+    /* ============================================================
+     * FB_STAT
+     * ============================================================ */
+
+    tle_read_fb_stat(&reg_value_24bit);
+
+    fb_status_data.coterr_status =
+        ((reg_value_24bit & FB_STAT_COTERR_msk) >>
+         FB_STAT_COTERR_pos);
+
+    fb_status_data.cotwarn_status =
+        ((reg_value_24bit & FB_STAT_COTWARN_msk) >>
+         FB_STAT_COTWARN_pos);
+
+    fb_status_data.reset_event_status =
+        ((reg_value_24bit & FB_STAT_RES_EVENT_msk) >>
+         FB_STAT_RES_EVENT_pos);
+
+    fb_status_data.por_event_status =
+        ((reg_value_24bit & FB_STAT_POR_EVENT_msk) >>
+         FB_STAT_POR_EVENT_pos);
+
+    fb_status_data.data_err_status =
+        ((reg_value_24bit & FB_STAT_DATA_ERR_msk) >>
+         FB_STAT_DATA_ERR_pos);
+
+    fb_status_data.supply_ext_fault_status =
+        ((reg_value_24bit & FB_STAT_SUP_NOK_EXT_msk) >>
+         FB_STAT_SUP_NOK_EXT_pos);
+
+    fb_status_data.supply_int_fault_status =
+        ((reg_value_24bit & FB_STAT_SUP_NOK_INT_msk) >>
+         FB_STAT_SUP_NOK_INT_pos);
+
+    fb_status_data.err_chgr0_status =
+        ((reg_value_24bit & FB_STAT_ERR_CHGR0_msk) >>
+         FB_STAT_ERR_CHGR0_pos);
+
+    fb_status_data.err_chgr1_status =
+        ((reg_value_24bit & FB_STAT_ERR_CHGR1_msk) >>
+         FB_STAT_ERR_CHGR1_pos);    
+
+    fb_status_data.err_chgr2_status =
+        ((reg_value_24bit & FB_STAT_ERR_CHGR2_msk) >>
+         FB_STAT_ERR_CHGR2_pos);
+
+    fb_status_data.spi_watchdog_status =
+        ((reg_value_24bit & FB_STAT_SPI_WD_ERR_msk) >>
+         FB_STAT_SPI_WD_ERR_pos);
+
+    fb_status_data.init_done_status =
+        ((reg_value_24bit & FB_STAT_INIT_DONE_msk) >>
+         FB_STAT_INIT_DONE_pos);
+
+
+    /* ============================================================
+     * FB_VOLTAGE1
+     * ============================================================ */
+    reg_value_24bit = 0;
+    tle_read_fb_voltage1(&reg_value_24bit);
+
+    fb_status_data.vio_voltage_raw =
+        (reg_value_24bit & FB_VOLTAGE1_VIO_msk) >>
+        FB_VOLTAGE1_VIO_pos;
+
+    fb_status_data.vdd_voltage_raw =
+        (reg_value_24bit & FB_VOLTAGE1_VDD_msk) >>
+        FB_VOLTAGE1_VDD_pos;
+
+    fb_status_data.vio_voltage =
+        0.0034534f * fb_status_data.vio_voltage_raw;
+
+    fb_status_data.vdd_voltage =
+        0.0034534f * fb_status_data.vdd_voltage_raw;
+
+
+    /* ============================================================
+     * FB_VOLTAGE2
+     * ============================================================ */
+    reg_value_24bit = 0;
+    tle_read_fb_voltage2(&reg_value_24bit);
+
+    fb_status_data.temp_raw =
+        (reg_value_24bit & FB_VOLTAGE2_TEMP_VALUE_msk) >>
+        FB_VOLTAGE2_TEMP_VALUE_pos;
+
+    fb_status_data.vbat_voltage_raw =
+        (reg_value_24bit & FB_VOLTAGE2_VBAT_msk) >>
+        FB_VOLTAGE2_VBAT_pos;
+
+    fb_status_data.temperature =
+        ((fb_status_data.temp_raw * 0.000593f) - 0.819f) /
+        (-0.0016f);
+
+    fb_status_data.vbat_voltage =
+        (41.47f * fb_status_data.vbat_voltage_raw) /
+        2047.0f;
+}
+
+
+
+
+uint8_t tle_read_channel_diag(uint8_t channel)
+{
+    uint32_t base = 0U;
+
+    if (channel >= 6U)
+    {
+        return 1U;
+    }
+
+    base = CHANNEL_BASE_ADDR(channel);
+
+
+    /* ============================================================
+     * FB_DC
+     * ============================================================ */
+
+    tle_read_fb_dc(base,
+                   channel,
+                   &fb_dc_value[channel].raw);
+
+    channel_fb_status_data[channel].tp_mant_raw =
+        (fb_dc_value[channel].raw & FB_DC_TP_MANT_msk) >>
+        FB_DC_TP_MANT_pos;
+
+    channel_fb_status_data[channel].to_mant_raw =
+        (fb_dc_value[channel].raw & FB_DC_TO_MANT_msk) >>
+        FB_DC_TO_MANT_pos;
+
+    if (channel_fb_status_data[channel].tp_mant_raw != 0U)
+    {
+        channel_fb_status_data[channel].duty_cycle =
+            (float)channel_fb_status_data[channel].to_mant_raw /
+            (float)channel_fb_status_data[channel].tp_mant_raw;
+    }
+    else
+    {
+        channel_fb_status_data[channel].duty_cycle = 0.0f;
+    }
+
+
+    /* ============================================================
+     * FB_VBAT
+     * ============================================================ */
+
+    tle_read_fb_vbat(base,
+                     channel,
+                     &fb_vbat_value[channel].raw);
+
+    channel_fb_status_data[channel].vbat_avg_mant_raw =
+        (fb_vbat_value[channel].raw & FB_VBAT_VBAT_AVG_MANT_msk) >>
+        FB_VBAT_VBAT_AVG_MANT_pos;
+
+    channel_fb_status_data[channel].vbat_exp =
+        (fb_vbat_value[channel].raw & FB_VBAT_EXP_msk) >>
+        FB_VBAT_EXP_pos;
+
+    if (channel_fb_status_data[channel].tp_mant_raw != 0U)
+    {
+        channel_fb_status_data[channel].vbat_voltage =
+            (41.47f *
+             (float)channel_fb_status_data[channel].vbat_avg_mant_raw) /
+            (float)channel_fb_status_data[channel].tp_mant_raw;
+    }
+    else
+    {
+        channel_fb_status_data[channel].vbat_voltage = 0.0f;
+    }
+
+
+    /* ============================================================
+     * FB_I_AVG
+     * ============================================================ */
+
+    tle_read_fb_i_avg(base,
+                      channel,
+                      &fb_i_avg_value[channel].raw);
+
+    channel_fb_status_data[channel].i_avg_mant_raw =
+        (int16_t)((fb_i_avg_value[channel].raw &
+                   FB_I_AVG_I_AVG_MANT_msk) >>
+                  FB_I_AVG_I_AVG_MANT_pos);
+
+    channel_fb_status_data[channel].i_avg_exp =
+        (fb_i_avg_value[channel].raw & FB_I_AVG_EXP_msk) >>
+        FB_I_AVG_EXP_pos;
+
+    /* 12-bit signed two's complement */
+    if (channel_fb_status_data[channel].i_avg_mant_raw & 0x0800)
+    {
+        channel_fb_status_data[channel].i_avg_mant_raw |= 0xF000;
+    }
+
+    if (channel_fb_status_data[channel].tp_mant_raw != 0U)
+    {
+        channel_fb_status_data[channel].average_current =
+            (4.0f *
+             (float)channel_fb_status_data[channel].i_avg_mant_raw) /
+            (float)channel_fb_status_data[channel].tp_mant_raw;
+    }
+    else
+    {
+        channel_fb_status_data[channel].average_current = 0.0f;
+    }
+
+
+    /* ============================================================
+     * FB_IMIN_IMAX
+     * ============================================================ */
+
+    tle_read_fb_imin_imax(base,
+                          channel,
+                          &fb_imin_imax_value[channel].raw);
+
+    channel_fb_status_data[channel].i_min_raw =
+        (int16_t)((fb_imin_imax_value[channel].raw &
+                   FB_IMIN_IMAX_IMIN_msk) >>
+                  FB_IMIN_IMAX_IMIN_pos);
+
+    channel_fb_status_data[channel].i_max_raw =
+        (int16_t)((fb_imin_imax_value[channel].raw &
+                   FB_IMIN_IMAX_IMAX_msk) >>
+                  FB_IMIN_IMAX_IMAX_pos);
+
+    /* 9-bit signed two's complement */
+    if (channel_fb_status_data[channel].i_min_raw & 0x0100)
+    {
+        channel_fb_status_data[channel].i_min_raw |= 0xFE00;
+    }
+
+    if (channel_fb_status_data[channel].i_max_raw & 0x0100)
+    {
+        channel_fb_status_data[channel].i_max_raw |= 0xFE00;
+    }
+
+    channel_fb_status_data[channel].minimum_current =
+        (4.0f *
+         (float)channel_fb_status_data[channel].i_min_raw) /
+        511.0f;
+
+    channel_fb_status_data[channel].maximum_current =
+        (4.0f *
+         (float)channel_fb_status_data[channel].i_max_raw) /
+        511.0f;
+
+
+    /* ============================================================
+     * FB_I_AVG_s16
+     * ============================================================ */
+
+    tle_read_fb_i_avg_s16(base,
+                          channel,
+                          &fb_i_avg_s16_value[channel].raw);
+
+    channel_fb_status_data[channel].i_avg_s16_raw =
+        (int32_t)((fb_i_avg_s16_value[channel].raw &
+                   FB_I_AVG_s16_I_AVG_s16_msk) >>
+                  FB_I_AVG_s16_I_AVG_s16_pos);
+
+    channel_fb_status_data[channel].timestamp =
+        (fb_i_avg_s16_value[channel].raw &
+         FB_I_AVG_s16_TIME_STAMP_msk) >>
+        FB_I_AVG_s16_TIME_STAMP_pos;
+
+    /*
+     * Signed 17-bit two's complement
+     */
+    if (channel_fb_status_data[channel].i_avg_s16_raw & 0x10000)
+    {
+        channel_fb_status_data[channel].i_avg_s16_raw |= 0xFFFE0000;
+    }
+
+    channel_fb_status_data[channel].average_current_s16 =
+        (4.0f *
+         (float)channel_fb_status_data[channel].i_avg_s16_raw) /
+        65535.0f;
+
+
+    /* ============================================================
+     * FB_INT_THRESH
+     * ============================================================ */
+
+    tle_read_fb_int_thresh(base,
+                           channel,
+                           &fb_int_thresh_value[channel].raw);
+
+    channel_fb_status_data[channel].integrator_threshold =
+        (fb_int_thresh_value[channel].raw &
+         FB_INT_THRESH_INT_THRESH_VAL_msk) >>
+        FB_INT_THRESH_INT_THRESH_VAL_pos;
+
+
+    /* ============================================================
+     * FB_PERIOD_MIN_MAX
+     * ============================================================ */
+
+    tle_read_fb_period_min_max(
+        base,
+        channel,
+        &fb_period_min_max_value[channel].raw);
+
+    channel_fb_status_data[channel].pwm_period_min_raw =
+        (fb_period_min_max_value[channel].raw &
+         FB_PERIOD_MIN_MAX_PMIN_msk) >>
+        FB_PERIOD_MIN_MAX_PMIN_pos;
+
+    channel_fb_status_data[channel].pwm_period_max_raw =
+        (fb_period_min_max_value[channel].raw &
+         FB_PERIOD_MIN_MAX_PMAX_msk) >>
+        FB_PERIOD_MIN_MAX_PMAX_pos;
+
+    /*
+     * fPWM = fSYS / (period * 256)
+     *
+     * Replace F_SYS_HZ with your actual system clock.
+     */
+    if (channel_fb_status_data[channel].pwm_period_max_raw != 0U)
+    {
+        channel_fb_status_data[channel].pwm_frequency_min =
+            F_SYS_HZ /
+            ((float)channel_fb_status_data[channel].pwm_period_max_raw *
+             256.0f);
+    }
+    else
+    {
+        channel_fb_status_data[channel].pwm_frequency_min = 0.0f;
+    }
+
+    if (channel_fb_status_data[channel].pwm_period_min_raw != 0U)
+    {
+        channel_fb_status_data[channel].pwm_frequency_max =
+            F_SYS_HZ /
+            ((float)channel_fb_status_data[channel].pwm_period_min_raw *
+             256.0f);
+    }
+    else
+    {
+        channel_fb_status_data[channel].pwm_frequency_max = 0.0f;
+    }
+
+
+    return 0U;
 }

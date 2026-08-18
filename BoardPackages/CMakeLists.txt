@@ -21,6 +21,7 @@ target_link_options(bsp_flags INTERFACE
     -mfloat-abi=hard
     -specs=nano.specs
     -specs=nosys.specs
+    -u _printf_float
     -Wl,--gc-sections
     -Wl,-e,Reset_Handler   # Force Reset_Handler as the entry point
 )

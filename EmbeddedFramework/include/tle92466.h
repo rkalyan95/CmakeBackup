@@ -6,6 +6,7 @@
 #include "pal_status.h"
 #include "pal_assert.h"
 #include "pal_spi.h"
+#include <stdbool.h>
 #define BASE_ADDR               0x00000000U
 
 #define CH_CTRL_ADDR            (BASE_ADDR + 0x0000)
@@ -750,39 +751,237 @@
 #define CHIPID2_ID2_pos                      0U
 #define CHIPID2_ID2_msk                      (0xFFFFU << CHIPID2_ID2_pos)
 
+/* ============================================================
+ * CHANNEL SPECIFIC MASKS
+ * ============================================================ */
+/* ============================================================
+ * SETPOINT
+ * ============================================================ */
 
-#define TLE_REPLY_MODE_pos       22U
-#define TLE_REPLY_MODE_msk       (0x03U << TLE_REPLY_MODE_pos)
+#define SETPOINT_TARGET_pos                 0U
+#define SETPOINT_TARGET_msk                 (0x7FFFU << SETPOINT_TARGET_pos)
 
-#define TLE_REPLY_MODE_16BIT     0x00U
-#define TLE_REPLY_MODE_22BIT     0x01U
-#define TLE_REPLY_MODE_FAULT     0x02U
-
-#define TLE_FAULT_1V5_pos                7U
-#define TLE_FAULT_1V5_msk                (1U << TLE_FAULT_1V5_pos)
-
-#define TLE_FAULT_2V5_pos                6U
-#define TLE_FAULT_2V5_msk                (1U << TLE_FAULT_2V5_pos)
-
-#define TLE_FAULT_BG_pos                 5U
-#define TLE_FAULT_BG_msk                 (1U << TLE_FAULT_BG_pos)
-
-#define TLE_FAULT_CLK_TOO_SLOW_pos       4U
-#define TLE_FAULT_CLK_TOO_SLOW_msk       (1U << TLE_FAULT_CLK_TOO_SLOW_pos)
-
-#define TLE_FAULT_CLK_TOO_FAST_pos       3U
-#define TLE_FAULT_CLK_TOO_FAST_msk       (1U << TLE_FAULT_CLK_TOO_FAST_pos)
-
-#define TLE_FAULT_DIG_CLK_TOO_SLOW_pos   2U
-#define TLE_FAULT_DIG_CLK_TOO_SLOW_msk   (1U << TLE_FAULT_DIG_CLK_TOO_SLOW_pos)
-
-#define TLE_FAULT_DIG_CLK_TOO_FAST_pos   1U
-#define TLE_FAULT_DIG_CLK_TOO_FAST_msk   (1U << TLE_FAULT_DIG_CLK_TOO_FAST_pos)
-
-#define TLE_FAULT_WD_REF_CLK_pos         0U
-#define TLE_FAULT_WD_REF_CLK_msk         (1U << TLE_FAULT_WD_REF_CLK_pos)
+#define SETPOINT_AUTO_LIMIT_DIS_pos         15U
+#define SETPOINT_AUTO_LIMIT_DIS_msk         (1U << SETPOINT_AUTO_LIMIT_DIS_pos)
 
 
+/* ============================================================
+ * CTRL
+ * ============================================================ */
+
+#define CTRL_MIN_INT_THRESH_pos             0U
+#define CTRL_MIN_INT_THRESH_msk             (0xFFU << CTRL_MIN_INT_THRESH_pos)
+
+#define CTRL_PWM_PERIOD_CALC_MODE_pos       8U
+#define CTRL_PWM_PERIOD_CALC_MODE_msk       (1U << CTRL_PWM_PERIOD_CALC_MODE_pos)
+
+#define CTRL_OLSG_WARN_WINDOW_pos           9U
+#define CTRL_OLSG_WARN_WINDOW_msk           (0x1FU << CTRL_OLSG_WARN_WINDOW_pos)
+
+#define CTRL_OLSG_WARN_EN_pos               14U
+#define CTRL_OLSG_WARN_EN_msk               (1U << CTRL_OLSG_WARN_EN_pos)
+
+
+/* ============================================================
+ * PERIOD
+ * ============================================================ */
+
+#define PERIOD_PERIOD_MANT_pos              0U
+#define PERIOD_PERIOD_MANT_msk              (0xFFU << PERIOD_PERIOD_MANT_pos)
+
+#define PERIOD_PERIOD_EXP_pos               8U
+#define PERIOD_PERIOD_EXP_msk               (0x07U << PERIOD_PERIOD_EXP_pos)
+
+#define PERIOD_LOW_FREQ_RANGE_EN_pos        11U
+#define PERIOD_LOW_FREQ_RANGE_EN_msk        (1U << PERIOD_LOW_FREQ_RANGE_EN_pos)
+
+#define PERIOD_PWM_CTRL_PARAM_pos           12U
+#define PERIOD_PWM_CTRL_PARAM_msk           (0x0FU << PERIOD_PWM_CTRL_PARAM_pos)
+
+
+/* ============================================================
+ * INTEGRATOR_LIMIT
+ * ============================================================ */
+
+#define INTEGRATOR_LIMIT_LIM_VALUE_ABS_pos      0U
+#define INTEGRATOR_LIMIT_LIM_VALUE_ABS_msk      (0x03FFU << INTEGRATOR_LIMIT_LIM_VALUE_ABS_pos)
+
+#define INTEGRATOR_LIMIT_AUTO_LIM_VALUE_ABS_pos 10U
+#define INTEGRATOR_LIMIT_AUTO_LIM_VALUE_ABS_msk (0x1FU << INTEGRATOR_LIMIT_AUTO_LIM_VALUE_ABS_pos)
+
+
+/* ============================================================
+ * DITHER_CLK_DIV
+ * ============================================================ */
+
+#define DITHER_CLK_DIV_MANT_pos             0U
+#define DITHER_CLK_DIV_MANT_msk             (0x03FFU << DITHER_CLK_DIV_MANT_pos)
+
+#define DITHER_CLK_DIV_EXP_pos              10U
+#define DITHER_CLK_DIV_EXP_msk              (0x0FU << DITHER_CLK_DIV_EXP_pos)
+
+#define DITHER_CLK_DIV_DITHER_PWM_SYNC_EN_pos   14U
+#define DITHER_CLK_DIV_DITHER_PWM_SYNC_EN_msk   (1U << DITHER_CLK_DIV_DITHER_PWM_SYNC_EN_pos)
+
+#define DITHER_CLK_DIV_DITHER_SETPOINT_SYNC_EN_pos 15U
+#define DITHER_CLK_DIV_DITHER_SETPOINT_SYNC_EN_msk (1U << DITHER_CLK_DIV_DITHER_SETPOINT_SYNC_EN_pos)
+
+
+/* ============================================================
+ * DITHER_STEP
+ * ============================================================ */
+
+#define DITHER_STEP_FLAT_pos                0U
+#define DITHER_STEP_FLAT_msk                (0xFFU << DITHER_STEP_FLAT_pos)
+
+#define DITHER_STEP_STEPS_pos               8U
+#define DITHER_STEP_STEPS_msk               (0xFFU << DITHER_STEP_STEPS_pos)
+
+
+/* ============================================================
+ * DITHER_CTRL
+ * ============================================================ */
+
+#define DITHER_CTRL_STEP_SIZE_pos           0U
+#define DITHER_CTRL_STEP_SIZE_msk           (0x0FFFU << DITHER_CTRL_STEP_SIZE_pos)
+
+#define DITHER_CTRL_DEEP_DITHER_pos         13U
+#define DITHER_CTRL_DEEP_DITHER_msk         (1U << DITHER_CTRL_DEEP_DITHER_pos)
+
+#define DITHER_CTRL_FAST_MEAS_pos           14U
+#define DITHER_CTRL_FAST_MEAS_msk           (0x03U << DITHER_CTRL_FAST_MEAS_pos)
+
+
+/* ============================================================
+ * CH_CONFIG
+ * ============================================================ */
+
+#define CH_CONFIG_SLEWR_pos                 0U
+#define CH_CONFIG_SLEWR_msk                 (0x03U << CH_CONFIG_SLEWR_pos)
+
+#define CH_CONFIG_I_DIAG_pos                2U
+#define CH_CONFIG_I_DIAG_msk                (0x03U << CH_CONFIG_I_DIAG_pos)
+
+#define CH_CONFIG_OL_TH_pos                 4U
+#define CH_CONFIG_OL_TH_msk                 (0x07U << CH_CONFIG_OL_TH_pos)
+
+#define CH_CONFIG_OL_TH_FIXED_pos           7U
+#define CH_CONFIG_OL_TH_FIXED_msk           (0x3FU << CH_CONFIG_OL_TH_FIXED_pos)
+
+#define CH_CONFIG_OC_DIAG_EN_pos            13U
+#define CH_CONFIG_OC_DIAG_EN_msk            (1U << CH_CONFIG_OC_DIAG_EN_pos)
+
+#define CH_CONFIG_OFF_DIAG_CH_pos            14U
+#define CH_CONFIG_OFF_DIAG_CH_msk            (0x03U << CH_CONFIG_OFF_DIAG_CH_pos)
+
+
+/* ============================================================
+ * MODE
+ * ============================================================ */
+
+#define MODE_CH_MODE_pos                    0U
+#define MODE_CH_MODE_msk                    (0x0FU << MODE_CH_MODE_pos)
+
+
+/* ============================================================
+ * TON
+ * ============================================================ */
+
+#define TON_TON_MANT_pos                    0U
+#define TON_TON_MANT_msk                    (0x03FFU << TON_TON_MANT_pos)
+
+#define TON_OLSG_TIMEOUT_pos                10U
+#define TON_OLSG_TIMEOUT_msk                (0x3FU << TON_OLSG_TIMEOUT_pos)
+
+
+/* ============================================================
+ * CTRL_INT_THRESH
+ * ============================================================ */
+
+#define CTRL_INT_THRESH_INT_THRESH_pos      0U
+#define CTRL_INT_THRESH_INT_THRESH_msk      (0x01FFU << CTRL_INT_THRESH_pos)
+
+/* ============================================================
+ * FB_DC
+ * ============================================================ */
+
+#define FB_DC_TP_MANT_pos                  0U
+#define FB_DC_TP_MANT_msk                  (0x7FFU << FB_DC_TP_MANT_pos)
+
+#define FB_DC_TO_MANT_pos                  11U
+#define FB_DC_TO_MANT_msk                  (0x7FFU << FB_DC_TO_MANT_pos)
+
+
+/* ============================================================
+ * FB_VBAT
+ * ============================================================ */
+
+#define FB_VBAT_VBAT_AVG_MANT_pos          0U
+#define FB_VBAT_VBAT_AVG_MANT_msk          (0x7FFU << FB_VBAT_VBAT_AVG_MANT_pos)
+
+#define FB_VBAT_EXP_pos                    12U
+#define FB_VBAT_EXP_msk                    (0x0FU << FB_VBAT_EXP_pos)
+
+#define FB_VBAT_DITHER_QUAD_CNT_pos        16U
+#define FB_VBAT_DITHER_QUAD_CNT_msk        (0x03U << FB_VBAT_DITHER_QUAD_CNT_pos)
+
+#define FB_VBAT_DITHER_PERIOD_CNT_pos      18U
+#define FB_VBAT_DITHER_PERIOD_CNT_msk      (0x03U << FB_VBAT_DITHER_PERIOD_CNT_pos)
+
+
+/* ============================================================
+ * FB_I_AVG
+ * ============================================================ */
+
+#define FB_I_AVG_I_AVG_MANT_pos            0U
+#define FB_I_AVG_I_AVG_MANT_msk            (0x0FFFU << FB_I_AVG_I_AVG_MANT_pos)
+
+#define FB_I_AVG_EXP_pos                   12U
+#define FB_I_AVG_EXP_msk                   (0x0FU << FB_I_AVG_EXP_pos)
+
+
+/* ============================================================
+ * FB_IMIN_IMAX
+ * ============================================================ */
+
+#define FB_IMIN_IMAX_IMIN_pos              0U
+#define FB_IMIN_IMAX_IMIN_msk              (0x01FFU << FB_IMIN_IMAX_IMIN_pos)
+
+#define FB_IMIN_IMAX_IMAX_pos              10U
+#define FB_IMIN_IMAX_IMAX_msk              (0x01FFU << FB_IMIN_IMAX_IMAX_pos)
+
+
+/* ============================================================
+ * FB_I_AVG_s16
+ * ============================================================ */
+
+#define FB_I_AVG_s16_I_AVG_s16_pos         0U
+#define FB_I_AVG_s16_I_AVG_s16_msk         (0x1FFFFU << FB_I_AVG_s16_I_AVG_s16_pos)
+
+#define FB_I_AVG_s16_TIME_STAMP_pos        20U
+#define FB_I_AVG_s16_TIME_STAMP_msk        (0x03U << FB_I_AVG_s16_TIME_STAMP_pos)
+
+
+/* ============================================================
+ * FB_INT_THRESH
+ * ============================================================ */
+
+#define FB_INT_THRESH_INT_THRESH_VAL_pos   0U
+#define FB_INT_THRESH_INT_THRESH_VAL_msk   (0xFFFFU << FB_INT_THRESH_INT_THRESH_VAL_pos)
+
+
+/* ============================================================
+ * FB_PERIOD_MIN_MAX
+ * ============================================================ */
+
+#define FB_PERIOD_MIN_MAX_PMIN_pos         0U
+#define FB_PERIOD_MIN_MAX_PMIN_msk         (0x03FFU << FB_PERIOD_MIN_MAX_PMIN_pos)
+
+#define FB_PERIOD_MIN_MAX_PMAX_pos         10U
+#define FB_PERIOD_MIN_MAX_PMAX_msk         (0x03FFU << FB_PERIOD_MIN_MAX_PMAX_pos)
+
+
+#define F_SYS_HZ    28000000UL
 
 typedef struct reply_16bit_
 {
@@ -837,7 +1036,178 @@ typedef union reply_criticalbit_union_
     reply_16bit_t fields;
 }reply_criticalbit_union_t;
 
+typedef struct faults_tle_
+{
+    /* GLOBAL_DIAG0 */
 
+    bool vbat_under_volt_flt;
+    bool vbat_over_volt_flt;
+
+    bool vio_under_volt_flt;
+    bool vio_over_volt_flt;
+
+    bool vdd_under_volt_flt;
+    bool vdd_over_volt_flt;
+
+    bool clock_flt;
+
+    bool central_over_temp_err;
+    bool central_over_temp_warn;
+
+    bool reset_event;
+    bool power_on_reset_event;
+
+    bool spi_watchdog_flt;
+
+
+    /* GLOBAL_DIAG1 */
+
+    bool vref_i_under_volt_flt;
+    bool vref_i_over_volt_flt;
+
+    bool vdd_2v5_under_volt_flt;
+    bool vdd_2v5_over_volt_flt;
+
+    bool ref_under_volt_flt;
+    bool ref_over_volt_flt;
+
+    bool vpre_over_volt_flt;
+
+    bool hv_adc_flt;
+
+
+    /* GLOBAL_DIAG2 */
+
+    bool register_ecc_flt;
+    bool otp_ecc_flt;
+    bool otp_virgin_flt;
+
+} faults_tle_t;
+
+typedef struct fb_status_data_
+{
+    /* PIN_STAT */
+
+    bool drv0_status;
+    bool drv1_status;
+    bool en_status;
+    bool faultn_status;
+    bool faultn_fb_status;
+
+
+    /* FB_STAT */
+
+    bool coterr_status;
+    bool cotwarn_status;
+    bool reset_event_status;
+    bool por_event_status;
+    bool data_err_status;
+    bool supply_ext_fault_status;
+    bool supply_int_fault_status;
+
+    bool err_chgr0_status;
+    bool err_chgr1_status;
+    bool err_chgr2_status;
+
+    bool spi_watchdog_status;
+    bool init_done_status;
+
+
+    /* FB_VOLTAGE1 */
+
+    uint16_t vio_voltage_raw;
+    uint16_t vdd_voltage_raw;
+
+    float vio_voltage;
+    float vdd_voltage;
+
+
+    /* FB_VOLTAGE2 */
+
+    uint16_t temp_raw;
+    uint16_t vbat_voltage_raw;
+
+    float temperature;
+    float vbat_voltage;
+
+} fb_status_data_t;
+
+typedef struct channel_fb_status_data_
+{
+    /* ============================================================
+     * FB_DC
+     * ============================================================ */
+
+    uint16_t tp_mant_raw;
+    uint16_t to_mant_raw;
+
+    float duty_cycle;
+
+
+    /* ============================================================
+     * FB_VBAT
+     * ============================================================ */
+
+    uint16_t vbat_avg_mant_raw;
+    uint8_t  vbat_exp;
+
+    float vbat_voltage;
+
+
+    /* ============================================================
+     * FB_I_AVG
+     * ============================================================ */
+
+    int16_t i_avg_mant_raw;
+    uint8_t i_avg_exp;
+
+    float average_current;
+
+
+    /* ============================================================
+     * FB_IMIN_IMAX
+     * ============================================================ */
+
+    int16_t i_min_raw;
+    int16_t i_max_raw;
+
+    float minimum_current;
+    float maximum_current;
+
+
+    /* ============================================================
+     * FB_I_AVG_s16
+     * ============================================================ */
+
+    int16_t i_avg_s16_raw;
+    uint8_t timestamp;
+
+    float average_current_s16;
+
+
+    /* ============================================================
+     * FB_INT_THRESH
+     * ============================================================ */
+
+    uint16_t integrator_threshold;
+
+
+    /* ============================================================
+     * FB_PERIOD_MIN_MAX
+     * ============================================================ */
+
+    uint16_t pwm_period_min_raw;
+    uint16_t pwm_period_max_raw;
+
+    float pwm_frequency_min;
+    float pwm_frequency_max;
+
+} channel_fb_status_data_t;
+
+
+extern fb_status_data_t fb_status_data;
+extern faults_tle_t tle_central_faults;
+extern channel_fb_status_data_t channel_fb_status_data[6];
 extern reply_16bit_union_t version_value;
 extern reply_16bit_union_t chipid0_value;
 extern reply_16bit_union_t chipid1_value;
@@ -1065,4 +1435,10 @@ uint32_t tle_write_ch_config(uint8_t channel, uint16_t value);
 uint32_t tle_write_mode(uint8_t channel, uint16_t value);
 uint32_t tle_write_ton(uint8_t channel, uint16_t value);
 uint32_t tle_write_ctrl_int_thresh(uint8_t channel, uint16_t value);
+
+uint8_t tle_read_central_diag(void);
+uint8_t tle_read_channel_diag(uint8_t channel);
+void update_fault_structure(void);
+void update_fb_status_data(void);
+uint8_t tle_read_channel_diag(uint8_t channel);
 #endif

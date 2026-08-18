@@ -191,32 +191,88 @@ cli_register("gpio-toggle",
 
 void tle_sm(void)
 {
-    uint8_t rst_lvl = 1;
-    pal_gpio_read(BOARD_GPIO_TLE_RST,&rst_lvl);
-    if(rst_lvl!= 0)
+    uint32_t cmd;
+    uint16_t value;
+    uint32_t fb_stat_reg;
+    uint32_t fb_voltage1_reg;
+    uint32_t fb_voltage2_reg;
+    uint16_t test_data = 0x8001;
+    uint8_t pin_lvl_rst = 0;
+    uint8_t pin_lvl_flt = 1;
+
+    uint16_t channel_value;
+    uint32_t channel_fb_value;
+    pal_gpio_read(BOARD_GPIO_TLE_RST,&pin_lvl_rst);
+   // pal_gpio_read(BOARD_GPIO_TLE_RST,&pin_lvl_flt);
+   pin_lvl_rst = 1;
+
+    if(pin_lvl_rst==0 || pin_lvl_flt==0)
     {
+        /*As of now all values are raw reg values , it will be converted to physical values in sometime later*/
+        cmd = tle_read_glb_diag0(&value);
+    logger_log(LOG_LEVEL_INFO, "GLB_DG0   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, global_diag0_value.raw, value);
+
+    cmd = tle_read_glb_diag1(&value);
+    logger_log(LOG_LEVEL_INFO, "GLB_DG1   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, global_diag1_value.raw, value);
+
+    cmd = tle_read_glb_diag2(&value);
+    logger_log(LOG_LEVEL_INFO, "GLB_DG2   CMD=%08X RAW=%08X DATA=%04X",
+               cmd, global_diag2_value.raw, value);
+
+    cmd = tle_read_fb_stat(&fb_stat_reg);
+    logger_log(LOG_LEVEL_INFO, "FB_STAT      CMD=%08X RAW=%08X DATA=%04X",
+            cmd, fb_stat_value.raw, fb_stat_reg);
+
+    cmd = tle_read_fb_voltage1(&fb_voltage1_reg);
+    logger_log(LOG_LEVEL_INFO, "FB_VOLTAGE1  CMD=%08X RAW=%08X DATA=%04X",
+            cmd, fb_voltage1_value.raw, fb_voltage1_reg);
+
+    cmd = tle_read_fb_voltage2(&fb_voltage2_reg);
+    logger_log(LOG_LEVEL_INFO, "FB_VOLTAGE2  CMD=%08X RAW=%08X DATA=%04X",
+            cmd, fb_voltage2_value.raw, fb_voltage2_reg);
+    logger_log(LOG_LEVEL_INFO,"TLE92466 is in reset state or fault state, please check the reset pin and fault pin");    
+        /* Reset pin is low, stay in reset state */
         return;
     }
 
-    #if 0
-    switch(sm)
+    else
     {
-        case 0:
-            break;
-        case 1:
-            break;
-        case 2:
-            break;
-        case 3:
-            break;
-        default:
-            break;
+        uint8_t channel = 0;
+        uint32_t base = CHANNEL_BASE_ADDR(channel);
+        //write to channel control
+        cmd = tle_write_ch_ctrl(test_data);
+        logger_log(LOG_LEVEL_INFO, "WR CH_CTRL      CMD = %08X", cmd);
+        //write to global config to mission mode
+        cmd = tle_write_glb_cfg(test_data);
+        logger_log(LOG_LEVEL_INFO, "WR GLB_CFG      CMD = %08X", cmd);
+        //write to setpoint register of channel 0 to extend
+        cmd = tle_write_setpoint(channel, 0x0001);
+        logger_log(LOG_LEVEL_INFO, "WR SET_POINT    CMD = %08X", cmd);
+        cmd = tle_read_setpoint(base, channel, &channel_value);
+        logger_log(LOG_LEVEL_INFO,
+               "CH%u_SETPOINT       CMD=%08X RAW=%08X DATA=%04X",
+               channel,
+               cmd,
+               set_point_value[channel].raw,
+               channel_value);  
+        logger_log(LOG_LEVEL_INFO,"TLE92466 is in initialization state, please check the setpoint register of channel 0 to extend");   
+        /* Reset pin is high, move to initialization state */
     }
-    uint32_t cmd;
-    uint16_t value;
-    uint16_t test_data = 0x5005;  
-    
-#endif
+ /*read state of resn pin
+ read state of en pin and fault pin -> read faults if flt pin is low
+ read diagonstics registers centeral
+ read feedback registers of channels which needs to be enabled
+ if ok , move to running state
+ wait for inputs from interface -> button/uart/can/ble
+ request to extend -> check if channel is enabled -> if yes , write to setpoint register
+ request to retract -> check if channel is enabled -> if yes , write to setpoint register
+ disable the channel -> write to setpoint register -> write to ch config register
+ read the feedback registers of channels which are enabled
+ read voltages , temperatures
+ go back to waiting for inputs from interface
+ let mechanical take care of the rest*/
 }
 
 void test_tle_comm(void)
@@ -229,7 +285,7 @@ void test_tle_comm(void)
     uint16_t test_data = 0x5005;
 
     /*-------------------- Write Registers --------------------*/
-
+#if 0
     cmd = tle_write_ch_ctrl(test_data);
     logger_log(LOG_LEVEL_INFO, "WR CH_CTRL      CMD = %08X", cmd);
 
@@ -279,7 +335,7 @@ void test_tle_comm(void)
     logger_log(LOG_LEVEL_INFO, "WR SFF_BIST     CMD = %08X", cmd);
 
     /*-------------------- Read Registers --------------------*/
-
+#endif
 
     cmd = tle_read_version(&value);
     logger_log(LOG_LEVEL_INFO, "VERSION   CMD=%08X RAW=%08X DATA=%04X",
@@ -526,6 +582,195 @@ for (uint8_t channel = 0U; channel < 6U; channel++)
                fb_period_min_max_value[channel].raw,
                channel_fb_value);
 }
+
+}
+
+
+void log_tle_status(void)
+{
+    /* ============================================================
+     * CENTRAL FAULTS
+     * ============================================================ */
+uint8_t channel;
+    logger_log(LOG_LEVEL_INFO,
+               "TLE FAULTS: "
+               "VBAT_UV=%d VBAT_OV=%d "
+               "VIO_UV=%d VIO_OV=%d "
+               "VDD_UV=%d VDD_OV=%d",
+               tle_central_faults.vbat_under_volt_flt,
+               tle_central_faults.vbat_over_volt_flt,
+               tle_central_faults.vio_under_volt_flt,
+               tle_central_faults.vio_over_volt_flt,
+               tle_central_faults.vdd_under_volt_flt,
+               tle_central_faults.vdd_over_volt_flt);
+
+    logger_log(LOG_LEVEL_INFO,
+               "TLE FAULTS: "
+               "CLK=%d COT_ERR=%d COT_WARN=%d "
+               "RESET=%d POR=%d SPI_WD=%d",
+               tle_central_faults.clock_flt,
+               tle_central_faults.central_over_temp_err,
+               tle_central_faults.central_over_temp_warn,
+               tle_central_faults.reset_event,
+               tle_central_faults.power_on_reset_event,
+               tle_central_faults.spi_watchdog_flt);
+
+    logger_log(LOG_LEVEL_INFO,
+               "TLE FAULTS: "
+               "VREF_I_UV=%d VREF_I_OV=%d "
+               "VDD2V5_UV=%d VDD2V5_OV=%d "
+               "REF_UV=%d REF_OV=%d",
+               tle_central_faults.vref_i_under_volt_flt,
+               tle_central_faults.vref_i_over_volt_flt,
+               tle_central_faults.vdd_2v5_under_volt_flt,
+               tle_central_faults.vdd_2v5_over_volt_flt,
+               tle_central_faults.ref_under_volt_flt,
+               tle_central_faults.ref_over_volt_flt);
+
+    logger_log(LOG_LEVEL_INFO,
+               "TLE FAULTS: "
+               "VPRE_OV=%d HVADC=%d "
+               "REG_ECC=%d OTP_ECC=%d OTP_VIRGIN=%d",
+               tle_central_faults.vpre_over_volt_flt,
+               tle_central_faults.hv_adc_flt,
+               tle_central_faults.register_ecc_flt,
+               tle_central_faults.otp_ecc_flt,
+               tle_central_faults.otp_virgin_flt);
+
+
+    /* ============================================================
+     * PIN STATUS
+     * ============================================================ */
+
+    logger_log(LOG_LEVEL_INFO,
+               "TLE PIN: "
+               "DRV0=%d DRV1=%d EN=%d "
+               "FAULTN=%d FAULTN_FB=%d",
+               fb_status_data.drv0_status,
+               fb_status_data.drv1_status,
+               fb_status_data.en_status,
+               fb_status_data.faultn_status,
+               fb_status_data.faultn_fb_status);
+
+
+    /* ============================================================
+     * FEEDBACK STATUS
+     * ============================================================ */
+
+    logger_log(LOG_LEVEL_INFO,
+               "TLE FB_STAT: "
+               "COT_ERR=%d COT_WARN=%d "
+               "RESET=%d POR=%d DATA_ERR=%d",
+               fb_status_data.coterr_status,
+               fb_status_data.cotwarn_status,
+               fb_status_data.reset_event_status,
+               fb_status_data.por_event_status,
+               fb_status_data.data_err_status);
+
+    logger_log(LOG_LEVEL_INFO,
+               "TLE FB_STAT: "
+               "SUP_EXT=%d SUP_INT=%d "
+               "CHGR0=%d CHGR1=%d CHGR2=%d "
+               "SPI_WD=%d INIT_DONE=%d",
+               fb_status_data.supply_ext_fault_status,
+               fb_status_data.supply_int_fault_status,
+               fb_status_data.err_chgr0_status,
+               fb_status_data.err_chgr1_status,
+               fb_status_data.err_chgr2_status,
+               fb_status_data.spi_watchdog_status,
+               fb_status_data.init_done_status);
+
+
+    /* ============================================================
+     * FEEDBACK VOLTAGES / TEMPERATURE
+     * ============================================================ */
+
+    logger_log(LOG_LEVEL_INFO,
+               "TLE FB_VOLTAGE1: "
+               "VIO_RAW=%u VIO=%.3fV "
+               "VDD_RAW=%u VDD=%.3fV",
+               fb_status_data.vio_voltage_raw,
+               fb_status_data.vio_voltage,
+               fb_status_data.vdd_voltage_raw,
+               fb_status_data.vdd_voltage);
+
+    logger_log(LOG_LEVEL_INFO,
+               "TLE FB_VOLTAGE2: "
+               "TEMP_RAW=%u TEMP=%.2fC "
+               "VBAT_RAW=%u VBAT=%.3fV",
+               fb_status_data.temp_raw,
+               fb_status_data.temperature,
+               fb_status_data.vbat_voltage_raw,
+               fb_status_data.vbat_voltage);
+    /* ============================================================
+     * CHANNEL FEEDBACK
+     * ============================================================ */
+
+    for (channel = 0U; channel < 6U; channel++)
+    {
+        tle_read_channel_diag(channel);
+        logger_log(LOG_LEVEL_INFO,
+                   "TLE CH%u FB_DC: "
+                   "TP_MANT=%u TO_MANT=%u "
+                   "DUTY=%.3f",
+                   channel,
+                   channel_fb_status_data[channel].tp_mant_raw,
+                   channel_fb_status_data[channel].to_mant_raw,
+                   channel_fb_status_data[channel].duty_cycle);
+
+        logger_log(LOG_LEVEL_INFO,
+                   "TLE CH%u FB_VBAT: "
+                   "VBAT_MANT=%u EXP=%u "
+                   "VBAT=%.3fV",
+                   channel,
+                   channel_fb_status_data[channel].vbat_avg_mant_raw,
+                   channel_fb_status_data[channel].vbat_exp,
+                   channel_fb_status_data[channel].vbat_voltage);
+
+        logger_log(LOG_LEVEL_INFO,
+                   "TLE CH%u FB_I_AVG: "
+                   "I_AVG_MANT=%d EXP=%u "
+                   "I_AVG=%.3fA",
+                   channel,
+                   channel_fb_status_data[channel].i_avg_mant_raw,
+                   channel_fb_status_data[channel].i_avg_exp,
+                   channel_fb_status_data[channel].average_current);
+
+        logger_log(LOG_LEVEL_INFO,
+                   "TLE CH%u FB_IMIN_IMAX: "
+                   "IMIN=%d IMAX=%d "
+                   "MIN=%.3fA MAX=%.3fA",
+                   channel,
+                   channel_fb_status_data[channel].i_min_raw,
+                   channel_fb_status_data[channel].i_max_raw,
+                   channel_fb_status_data[channel].minimum_current,
+                   channel_fb_status_data[channel].maximum_current);
+
+        logger_log(LOG_LEVEL_INFO,
+                   "TLE CH%u FB_I_AVG_s16: "
+                   "I_AVG_s16=%ld TIMESTAMP=%u "
+                   "I_AVG=%.3fA",
+                   channel,
+                   (long)channel_fb_status_data[channel].i_avg_s16_raw,
+                   channel_fb_status_data[channel].timestamp,
+                   channel_fb_status_data[channel].average_current_s16);
+
+        logger_log(LOG_LEVEL_INFO,
+                   "TLE CH%u FB_INT_THRESH: "
+                   "INT_THRESH=%u",
+                   channel,
+                   channel_fb_status_data[channel].integrator_threshold);
+
+        logger_log(LOG_LEVEL_INFO,
+                   "TLE CH%u FB_PERIOD_MIN_MAX: "
+                   "PMIN=%u PMAX=%u "
+                   "FREQ_MIN=%.2fHz FREQ_MAX=%.2fHz",
+                   channel,
+                   channel_fb_status_data[channel].pwm_period_min_raw,
+                   channel_fb_status_data[channel].pwm_period_max_raw,
+                   channel_fb_status_data[channel].pwm_frequency_min,
+                   channel_fb_status_data[channel].pwm_frequency_max);
+    }
 }
 
 
@@ -546,13 +791,23 @@ int main(void)
      const uint8_t message[] =
         "\r\n --New Data Set--\r\n";
    cli_init();
+   
     while (1)
     {
         
         //test_blink();
         //test_timer();
-        test_tle_comm();
+        //tle_sm();
+       // test_tle_comm();
+     
+       update_fault_structure();
 
+       update_fb_status_data();
+       logger_log(LOG_LEVEL_INFO,"%s",message);
+       log_tle_status();
+      
+       test_tle_comm();
+    logger_log(LOG_LEVEL_INFO,"%s",message);
         pal_timer_delay_ms(1000);
     }
     
