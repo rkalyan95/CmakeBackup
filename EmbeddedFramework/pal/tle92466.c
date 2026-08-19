@@ -800,6 +800,9 @@ uint32_t tle_write_ctrl_int_thresh(uint8_t channel, uint16_t value)
         value);
 }
 
+
+
+     
 void update_fault_structure(void)
 {
     uint16_t reg_value = 0;
@@ -915,7 +918,12 @@ void update_fault_structure(void)
     tle_central_faults.otp_virgin_flt =
         ((reg_value & GLOBAL_DIAG2_OTP_VIRGIN_msk) >>
          GLOBAL_DIAG2_OTP_VIRGIN_pos);
+
+    return;
 }
+
+
+
 
 void update_fb_status_data(void)
 {

@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include "cli.h"
 #include "tle92466.h"
+#include "wolverin_claw.h"
 static void cmd_led(uint8_t argc, char *argv[])
 {
     (void)argc;
@@ -429,7 +430,7 @@ uint16_t channel_value;
 uint32_t channel_fb_value;
     cmd = tle_write_integrator_limit(0, 0x43FE);
     logger_log(LOG_LEVEL_INFO, "WR INT_LIMIT    CMD = %08X", cmd);
-for (uint8_t channel = 0U; channel < 6U; channel++)
+for (uint8_t channel = 0U; channel < 1U; channel++)
 {
     uint32_t base = CHANNEL_BASE_ADDR(channel);
 
@@ -706,7 +707,7 @@ uint8_t channel;
      * CHANNEL FEEDBACK
      * ============================================================ */
 
-    for (channel = 0U; channel < 6U; channel++)
+    for (channel = 0U; channel < 1U; channel++)
     {
         tle_read_channel_diag(channel);
         logger_log(LOG_LEVEL_INFO,
@@ -800,14 +801,17 @@ int main(void)
         //tle_sm();
        // test_tle_comm();
      
-       update_fault_structure();
+        update_fault_structure();
 
-       update_fb_status_data();
-       logger_log(LOG_LEVEL_INFO,"%s",message);
-       log_tle_status();
-      
-       test_tle_comm();
-    logger_log(LOG_LEVEL_INFO,"%s",message);
+        update_fb_status_data();
+        logger_log(LOG_LEVEL_INFO,"%s",message);
+        //
+        if(actuator_init_and_start()!=ACT_OK)
+        {
+            log_tle_status();
+        }
+        //test_tle_comm();
+        logger_log(LOG_LEVEL_INFO,"%s",message);
         pal_timer_delay_ms(1000);
     }
     
