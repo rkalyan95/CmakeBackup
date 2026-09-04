@@ -19,5 +19,6 @@ typedef enum
 
 
 actuator_status_t actuator_init_and_start(void);
-
+void wolverin_log_diagonstics(void);
+actuator_status_t actuator_hold(void);
 #endif
