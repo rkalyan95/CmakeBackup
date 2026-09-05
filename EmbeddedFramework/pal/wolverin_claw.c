@@ -49,142 +49,288 @@ void start_check_bist(void)
 
 }
 
-actuator_status_t actuator_hold(void)
+
+static inline bool pin_lvl_check_en(void)
 {
-    uint32_t base = CHANNEL_BASE_ADDR(0);
-    uint16_t glb_regs = 0;
-    uint32_t command = 0;
-    command = tle_write_setpoint(ACT_CHANNEL, TLE_SETPOINT_HOLDMA);
-    log_info("WRITE->CH_SETPOINT %04X",TLE_SETPOINT_HOLDMA);
-
-    command = tle_read_setpoint(base ,ACT_CHANNEL, &glb_regs);
-
-    log_info("READ->CH_SETPOINT %04X",glb_regs);
-
-    if (!(glb_regs & SETPOINT_TARGET_msk))
-    {
-        log_info("%s","FAILED TO CONFIGURE SET POINT");
-        return ACT_SETPOINT_FAILED;
-    }
-
-     log_info("%s","SUCCESSFULLY CONFIGURED");
-    return ACT_OK;
-
-
-}
-actuator_status_t actuator_init_and_start(void)
-{
-    uint32_t base = CHANNEL_BASE_ADDR(0);
     uint8_t pin_lvl = 0;
+    pal_gpio_read(BOARD_GPIO_TLE_EN,&pin_lvl);
+    return ((!pin_lvl)?(false):(true));
+}
+
+static inline bool pin_lvl_check_rst(void)
+{
+    uint8_t pin_lvl = 0;
+    pal_gpio_read(BOARD_GPIO_TLE_RST,&pin_lvl);
+    return ((!pin_lvl)?(false):(true));
+}
+
+static inline bool is_device_present(void)
+{
+    uint16_t glb_regs = 0;
+    tle_read_version(&glb_regs);
+    return ((glb_regs == 0xC1FE)?(true):(false));
+}
+
+static inline bool set_device_vio(void)
+{
     uint16_t glb_regs = 0;
     uint32_t command = 0;
 
-    pal_gpio_read(BOARD_GPIO_TLE_RST,&pin_lvl);
-    if(!pin_lvl)
-    {
-        log_info("%s","RESET PIN NOT OKAY");
-        return ACT_RESN_NOT_OK;
-    }
-    pal_gpio_read(BOARD_GPIO_TLE_EN,&pin_lvl);
-    if(!pin_lvl)
-    {
-        log_info("%s","ENABLE PIN NOT OKAY");
-        return ACT_EN_NOT_OK;
-    }
-
-    tle_read_version(&glb_regs);
-    if(glb_regs != 0xC1FE)
-    {
-        log_info("%s","TLE VERSION NOT OKAY");
-        return ACT_INIT_NOT_DONE;
-    }
-
-    //start_check_bist();
     command = tle_read_glb_cfg(&glb_regs);
     log_info("READ->GLB_CFG %04X",glb_regs);
 
     VIO_VOLT_SEL3V3(glb_regs);
+
     log_info("WRITE->GLB_CFG %04X",glb_regs);
     command = tle_write_glb_cfg(glb_regs);
     
     command = tle_read_glb_cfg(&glb_regs);
-    log_info("READ->GLB_CFG %04X",glb_regs);
+    log_info("READ->GLB_CFG %04X",glb_regs);   
 
-    tle_write_glb_diag0(0x0000U);
-    update_fault_structure();
-    update_fb_status_data();
+    return true;
+}
 
-    
+static inline bool clear_faults(void)
+{
+     tle_write_glb_diag0(0x0000U);
+}
 
-    if(fb_status_data.init_done_status == 0)
-    {
-        log_info("%s","INIT FB STATUS NOT OKAY");
-        return ACT_INIT_NOT_DONE;
-    }
+static inline bool is_device_initialised(void)
+{
+    return ((fb_status_data.init_done_status == 0)?(false):(true));
+}
 
-    if(tle_central_faults.vbat_under_volt_flt)
-    {
-        log_info("%s","CHECK VBAT of Device");
-        return ACT_FB_STAT_FAULT;
-    }
-    command  = tle_write_mode(ACT_CHANNEL, 0x0001U);
+static inline bool is_vbat_good(void)
+{
+    return ((tle_central_faults.vbat_under_volt_flt || tle_central_faults.vbat_over_volt_flt)?(false):(true));
+}
 
-    command = tle_read_mode(base ,ACT_CHANNEL, &glb_regs);
-    if ((glb_regs & MODE_CH_MODE_msk)!=0x0001U)
-    {
-        log_info("%s","FAILED TO CONFIGURE CHANNEL MODE");
-        return ACT_CHANNEL_FAULT;
-    }
-    log_info("%s","SUCCESS TO CONFIGURE CHANNEL MODE");
+static inline bool is_vio_good(void)
+{
+    return ((tle_central_faults.vio_under_volt_flt || tle_central_faults.vio_over_volt_flt)?(false):(true));
+}
 
+static inline bool is_vdd_good(void)
+{
+    return ((tle_central_faults.vdd_under_volt_flt || tle_central_faults.vdd_over_volt_flt)?(false):(true));
+}
+static inline bool is_clock_good(void)
+{
+    return ((tle_central_faults.clock_flt)?(false):(true));
+}
+
+static inline bool is_central_temp_good(void)
+{
+    return ((tle_central_faults.central_over_temp_err || tle_central_faults.central_over_temp_warn)?(false):(true));
+}
+
+static inline bool is_reset_event(void)
+{
+    return ((tle_central_faults.reset_event)?(true):(false));
+}
+
+static inline bool is_power_on_reset_event(void)
+{
+    return ((tle_central_faults.power_on_reset_event)?(true):(false));
+}
+
+static inline bool is_spi_watchdog_fault(void)
+{
+    return ((tle_central_faults.spi_watchdog_flt)?(true):(false));
+}
+
+static inline bool is_vref_good(void)
+{
+    return ((tle_central_faults.vref_i_under_volt_flt || tle_central_faults.vref_i_over_volt_flt)?(false):(true));
+}
+
+static inline bool is_vdd_2v5_good(void)
+{
+    return ((tle_central_faults.vdd_2v5_under_volt_flt || tle_central_faults.vdd_2v5_over_volt_flt)?(false):(true));
+}
+
+static inline bool is_ref_good(void)
+{
+    return ((tle_central_faults.ref_under_volt_flt || tle_central_faults.ref_over_volt_flt)?(false):(true));
+}
+
+static inline bool is_vpre_good(void)
+{
+    return ((tle_central_faults.vpre_over_volt_flt)?(false):(true));
+}
+
+static inline bool is_hv_adc_good(void)
+{
+    return ((tle_central_faults.hv_adc_flt)?(false):(true));
+}
+
+static inline bool is_register_ecc_good(void)
+{
+    return ((tle_central_faults.register_ecc_flt)?(false):(true));
+}
+
+static inline bool is_otp_ecc_good(void)
+{
+    return ((tle_central_faults.otp_ecc_flt)?(false):(true));
+}
+
+static inline bool is_otp_virgin_good(void)
+{
+    return ((tle_central_faults.otp_virgin_flt)?(false):(true));
+}
+
+static actuator_status_t enable_mission_mode(void)
+{   
+    uint16_t glb_regs = 0;
+    uint32_t command = 0;
     command = tle_read_ch_ctrl(&glb_regs);
     log_info("READ->CH_CTRL_MODE %04X",glb_regs);
+
     glb_regs |= (CH_CTRL_OP_MODE_msk);
-
     log_info("WRITE->CH_CTRL_MODE %04X",glb_regs);
-
     command = tle_write_ch_ctrl(glb_regs);
 
     command = tle_read_ch_ctrl(&glb_regs);
     log_info("READ->CH_CTRL_MODE %04X",glb_regs);
 
-    if (!(glb_regs & CH_CTRL_OP_MODE_msk))
-    {
-        log_info("%s","FAILED TO UPDATE TO MISSION MODE");
-        return ACT_CONFIG_FAILED;
-    }
+    return (!(glb_regs & CH_CTRL_OP_MODE_msk)?(ACT_CONFIG_FAILED):(ACT_OK));
+}
+
+static actuator_status_t configure_channel_mode(uint8_t solenoid_num)
+{
+    uint16_t glb_regs = 0;
+    uint32_t command = 0;
+
+    uint32_t base = CHANNEL_BASE_ADDR(solenoid_num);
+    command  = tle_write_mode(ACT_CHANNEL, 0x0001U);
+    command = tle_read_mode(base ,ACT_CHANNEL, &glb_regs);
+
+    return (((glb_regs & MODE_CH_MODE_msk)!=0x0001U)?(ACT_CONFIG_FAILED):(ACT_OK));
+}
+
+static actuator_status_t enable_solenoid_channel(uint8_t solenoid_num)
+{
+    uint16_t glb_regs = 0;
+    uint32_t command = 0;
+
     command = tle_read_ch_ctrl(&glb_regs);
     log_info("READ->CH_CTRL %04X",glb_regs);
+
     glb_regs |= CH_CTRL_EN_CH0_msk;
     log_info("WRITE->CH_CTRL %04X",glb_regs);
     command = tle_write_ch_ctrl(glb_regs);
     
     command = tle_read_ch_ctrl(&glb_regs);
-    log_info("READ->CH_CTRL %04X",glb_regs);
-    if(!(glb_regs & CH_CTRL_EN_CH0_msk))
-    { 
-        log_info("%s","FAILED TO ENABLE THE CHANNEL");
-        return ACT_ENABLE_FAILED;
-    }
 
+    return (!(glb_regs & CH_CTRL_EN_CH0_msk)?(ACT_ENABLE_FAILED):(ACT_OK));
+}
+
+static actuator_status_t configure_setpoint(uint8_t solenoid_num, uint16_t setpoint)
+{
+    uint16_t glb_regs = 0;
+    uint32_t command = 0;
+
+    uint32_t base = CHANNEL_BASE_ADDR(solenoid_num);
     command = tle_write_setpoint(ACT_CHANNEL, TLE_SETPOINT_500MA);
     log_info("WRITE->CH_SETPOINT %04X",TLE_SETPOINT_500MA);
 
     command = tle_read_setpoint(base ,ACT_CHANNEL, &glb_regs);
 
-    log_info("READ->CH_SETPOINT %04X",glb_regs);
+    return (!(glb_regs & SETPOINT_TARGET_msk)?(ACT_SETPOINT_FAILED):(ACT_OK));
+}
 
-    if (!(glb_regs & SETPOINT_TARGET_msk))
+actuator_status_t actuator_hold(void)
+{
+    uint16_t glb_regs = 0;
+    uint32_t command = 0;
+
+    uint32_t base = CHANNEL_BASE_ADDR(0);
+    command = tle_write_setpoint(ACT_CHANNEL, TLE_SETPOINT_HOLDMA);
+    log_info("WRITE->CH_SETPOINT %04X",TLE_SETPOINT_HOLDMA);
+
+    command = tle_read_setpoint(base ,ACT_CHANNEL, &glb_regs);
+
+    return (!(glb_regs & SETPOINT_TARGET_msk)?(ACT_SETPOINT_FAILED):(ACT_OK));
+}
+
+static inline void handle_fault_state(bool actual_state , bool expected_state , uint8_t fault_num)
+{
+    if(actual_state != expected_state)
     {
-        log_info("%s","FAILED TO CONFIGURE SET POINT");
-        return ACT_SETPOINT_FAILED;
+        log_error("ERROR , FAULT_NUM->%d",fault_num);
     }
+}
 
-     log_info("%s","SUCCESSFULLY CONFIGURED");
+static inline void handle_actuator_status(actuator_status_t actual_status , actuator_status_t expected_status,uint8_t fault_num)
+{
+    if(actual_status != expected_status)
+    {
+        log_error("ERROR , ACT_STATUS->%d , FIELD-> %d",actual_status,fault_num);
+    }
+}
 
-   
-    return ACT_OK;
-    
+actuator_status_t actuator_init_and_start(void)
+{
+
+    actuator_status_t err = ACT_OK;
+    bool fault_state = true;
+    fault_state = pin_lvl_check_en();
+    handle_fault_state(fault_state,true,1);
+    fault_state = pin_lvl_check_rst();
+    handle_fault_state(fault_state,true,2);
+    fault_state = is_device_present();
+    handle_fault_state(fault_state,true,3);
+    fault_state = set_device_vio();
+    handle_fault_state(fault_state,true,4);
+    clear_faults();
+    update_fault_structure();
+    update_fb_status_data();
+    fault_state = is_device_initialised();
+    handle_fault_state(fault_state,true,5);
+    fault_state = is_vbat_good();
+    handle_fault_state(fault_state,true,6);
+    fault_state = is_vio_good();
+    handle_fault_state(fault_state,true,7);
+    fault_state = is_vdd_good();
+    handle_fault_state(fault_state,true,8);
+    fault_state = is_clock_good();
+    handle_fault_state(fault_state,true,9);
+    fault_state = is_central_temp_good();
+    handle_fault_state(fault_state,true,10);
+    fault_state = is_reset_event();
+    handle_fault_state(fault_state,false,11);
+    fault_state = is_power_on_reset_event();
+    handle_fault_state(fault_state,false,12);
+    fault_state = is_spi_watchdog_fault();
+    handle_fault_state(fault_state,false,13);
+    fault_state = is_vref_good();
+    handle_fault_state(fault_state,true,14);
+    fault_state = is_vdd_2v5_good();
+    handle_fault_state(fault_state,true,15);
+    fault_state = is_ref_good();
+    handle_fault_state(fault_state,true,16);
+    fault_state = is_vpre_good();
+    handle_fault_state(fault_state,true,17);
+    fault_state = is_hv_adc_good();
+    handle_fault_state(fault_state,true,18);
+    fault_state = is_register_ecc_good();
+    handle_fault_state(fault_state,true,19);
+    fault_state = is_otp_ecc_good();
+    handle_fault_state(fault_state,true,20);
+
+    fault_state = is_otp_virgin_good();
+    handle_fault_state(fault_state,true,21);
+
+    err = configure_channel_mode(0);
+    handle_actuator_status(err,ACT_OK,1);
+    err = enable_mission_mode();
+    handle_actuator_status(err,ACT_OK,2);
+    err = enable_solenoid_channel(0);
+    handle_actuator_status(err,ACT_OK,3);
+    err = configure_setpoint(0, TLE_SETPOINT_500MA);
+    handle_actuator_status(err,ACT_OK,4);
+    return (fault_state==false || err != ACT_OK)?(err):(ACT_OK);
+
 }
 
 void wolverin_log_diagonstics(void)

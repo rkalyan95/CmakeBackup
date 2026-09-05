@@ -612,18 +612,17 @@ int main(void)
     while (1)
     {
         
-        logger_log(LOG_LEVEL_INFO,"%s",message);
-        //test_tle_comm();
-        actuator_init_and_start();
-        //if(!=ACT_OK)
-        //{
-        //    wolverin_log_diagonstics();
-        //}
+        logger_log(LOG_LEVEL_INFO,"%s","ON");
         
-        logger_log(LOG_LEVEL_INFO,"%s",message);
+        if(actuator_init_and_start()!=ACT_OK)
+        {
+            wolverin_log_diagonstics();
+        }
+        
         pal_timer_delay_ms(5000);
+        logger_log(LOG_LEVEL_INFO,"%s","OFF");
         actuator_hold();
-        pal_timer_delay_ms(5000);
+        pal_timer_delay_ms(8000);
     }
     
 }
