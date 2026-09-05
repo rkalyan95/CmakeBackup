@@ -9,15 +9,14 @@
 /* Replace with the actual value from your TLE92466 configuration */
 #define TLE_MISSION_MODE        1U
 
-/* Replace with the actual 16-bit setpoint encoding for 500 mA */
-#define TLE_SETPOINT_500MA      0x5000U
-#define TLE_SETPOINT_HOLDMA     0x0000U
-
 /* Replace with the actual CTRL value required to enable CH1 */
 #define TLE_CH1_ENABLE          0x0000U
 
 #define VIO_VOLT_SEL3V3(x)    (x &= ~(GLOBAL_CONFIG_VIO_SEL_msk))
 #define VIO_VOLT_SEL5V0(x)    (x |= (GLOBAL_CONFIG_VIO_SEL_msk))
+
+#define JOIN(a,b,c)   (a##b##c)
+#define CHANNEL_SOLENOID(channel)   JOIN(CH_CTRL_EN_CH,channel,_msk)
 
 void start_check_bist(void)
 {
@@ -196,16 +195,17 @@ static actuator_status_t enable_mission_mode(void)
     return (!(glb_regs & CH_CTRL_OP_MODE_msk)?(ACT_CONFIG_FAILED):(ACT_OK));
 }
 
-static actuator_status_t configure_channel_mode(uint8_t solenoid_num)
+static actuator_status_t configure_channel_mode(uint8_t solenoid_num, uint16_t mode)
 {
     uint16_t glb_regs = 0;
     uint32_t command = 0;
-
+    uint16_t reg_value = 0;
     uint32_t base = CHANNEL_BASE_ADDR(solenoid_num);
-    command  = tle_write_mode(ACT_CHANNEL, 0x0001U);
+    
+    command  = tle_write_mode(ACT_CHANNEL, mode);
     command = tle_read_mode(base ,ACT_CHANNEL, &glb_regs);
 
-    return (((glb_regs & MODE_CH_MODE_msk)!=0x0001U)?(ACT_CONFIG_FAILED):(ACT_OK));
+    return (((glb_regs & MODE_CH_MODE_msk)!=mode)?(ACT_CONFIG_FAILED):(ACT_OK));
 }
 
 static actuator_status_t enable_solenoid_channel(uint8_t solenoid_num)
@@ -215,8 +215,8 @@ static actuator_status_t enable_solenoid_channel(uint8_t solenoid_num)
 
     command = tle_read_ch_ctrl(&glb_regs);
     log_info("READ->CH_CTRL %04X",glb_regs);
-
-    glb_regs |= CH_CTRL_EN_CH0_msk;
+    
+    glb_regs |= solenoid_num;
     log_info("WRITE->CH_CTRL %04X",glb_regs);
     command = tle_write_ch_ctrl(glb_regs);
     
@@ -231,12 +231,13 @@ static actuator_status_t configure_setpoint(uint8_t solenoid_num, uint16_t setpo
     uint32_t command = 0;
 
     uint32_t base = CHANNEL_BASE_ADDR(solenoid_num);
-    command = tle_write_setpoint(ACT_CHANNEL, TLE_SETPOINT_500MA);
-    log_info("WRITE->CH_SETPOINT %04X",TLE_SETPOINT_500MA);
+    command = tle_write_setpoint(ACT_CHANNEL, setpoint);
+    log_info("WRITE->CH_SETPOINT %04X",setpoint);
 
     command = tle_read_setpoint(base ,ACT_CHANNEL, &glb_regs);
-
-    return (!(glb_regs & SETPOINT_TARGET_msk)?(ACT_SETPOINT_FAILED):(ACT_OK));
+    log_info("READ->CH_SETPOINT %04X",glb_regs);
+    
+    return ((glb_regs & SETPOINT_TARGET_msk != setpoint)?(ACT_SETPOINT_FAILED):(ACT_OK));
 }
 
 actuator_status_t actuator_hold(void)
@@ -269,10 +270,8 @@ static inline void handle_actuator_status(actuator_status_t actual_status , actu
     }
 }
 
-actuator_status_t actuator_init_and_start(void)
+static actuator_status_t actuator_init(void)
 {
-
-    actuator_status_t err = ACT_OK;
     bool fault_state = true;
     fault_state = pin_lvl_check_en();
     handle_fault_state(fault_state,true,1);
@@ -321,16 +320,52 @@ actuator_status_t actuator_init_and_start(void)
     fault_state = is_otp_virgin_good();
     handle_fault_state(fault_state,true,21);
 
-    err = configure_channel_mode(0);
+    return (fault_state==false)?(ACT_CENTRAL_FAULT):(ACT_OK);
+}
+
+static actuator_status_t actuator_start(uint8_t load_ch , uint16_t setpoint)
+{
+
+
+    actuator_status_t err = ACT_OK;
+    bool fault_state = true;
+
+    actuator_init();
+    err = configure_channel_mode(0,0x0001U);
     handle_actuator_status(err,ACT_OK,1);
     err = enable_mission_mode();
     handle_actuator_status(err,ACT_OK,2);
-    err = enable_solenoid_channel(0);
+
+    ((load_ch==0)?(err = enable_solenoid_channel(CHANNEL_SOLENOID(0))):((void)0));
     handle_actuator_status(err,ACT_OK,3);
-    err = configure_setpoint(0, TLE_SETPOINT_500MA);
+    ((load_ch==1)?(err = enable_solenoid_channel(CHANNEL_SOLENOID(1))):((void)0));
     handle_actuator_status(err,ACT_OK,4);
+    ((load_ch==2)?(err = enable_solenoid_channel(CHANNEL_SOLENOID(2))):((void)0));
+    handle_actuator_status(err,ACT_OK,5);
+    ((load_ch==3)?(err = enable_solenoid_channel(CHANNEL_SOLENOID(3))):((void)0));
+    handle_actuator_status(err,ACT_OK,6);
+    ((load_ch==4)?(err = enable_solenoid_channel(CHANNEL_SOLENOID(4))):((void)0));
+    handle_actuator_status(err,ACT_OK,7);
+    ((load_ch==5)?(err = enable_solenoid_channel(CHANNEL_SOLENOID(5))):((void)0));
+    handle_actuator_status(err,ACT_OK,8);
+    //err = enable_solenoid_channel(CHANNEL_SOLENOID(0));
+    
+    err = configure_setpoint(load_ch, setpoint);
+    handle_actuator_status(err,ACT_OK,9);
     return (fault_state==false || err != ACT_OK)?(err):(ACT_OK);
 
+}
+
+actuator_status_t actuator_run(uint8_t load_ch , uint16_t setpoint)
+{
+    actuator_status_t err = ACT_OK;
+    err = actuator_init();
+    if(err != ACT_OK)
+    {
+        return err;
+    }
+    err = actuator_start(load_ch, setpoint);
+    return err;
 }
 
 void wolverin_log_diagonstics(void)

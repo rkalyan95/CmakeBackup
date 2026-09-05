@@ -18,7 +18,11 @@ typedef enum
 } actuator_status_t;
 
 
-actuator_status_t actuator_init_and_start(void);
+/* Replace with the actual 16-bit setpoint encoding for 500 mA */
+#define TLE_SETPOINT_500MA      0x5000U
+#define TLE_SETPOINT_HOLDMA     0x0000U
+
+actuator_status_t actuator_run(uint8_t load_ch , uint16_t setpoint);
 void wolverin_log_diagonstics(void);
 actuator_status_t actuator_hold(void);
 #endif

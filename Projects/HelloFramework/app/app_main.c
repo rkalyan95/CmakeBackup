@@ -614,15 +614,19 @@ int main(void)
         
         logger_log(LOG_LEVEL_INFO,"%s","ON");
         
-        if(actuator_init_and_start()!=ACT_OK)
+        if(actuator_run(0,TLE_SETPOINT_500MA)!=ACT_OK)
         {
             wolverin_log_diagonstics();
         }
         
         pal_timer_delay_ms(5000);
         logger_log(LOG_LEVEL_INFO,"%s","OFF");
-        actuator_hold();
+        if(actuator_run(0,TLE_SETPOINT_HOLDMA)!=ACT_OK)
+        {
+            wolverin_log_diagonstics();
+        }
         pal_timer_delay_ms(8000);
+    
     }
     
 }
